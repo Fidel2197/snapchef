@@ -2,7 +2,7 @@
   min-height: 100vh;
   display: grid;
   grid-template-columns: minmax(380px, 1fr) minmax(420px, 0.9fr);
-  align-items: start;
+  align-items: stretch;
   background:
     radial-gradient(circle at 18% 12%, rgba(244, 185, 86, 0.22), transparent 32rem),
     linear-gradient(135deg, #10241d 0%, #17221e 46%, #2d2a22 100%);
@@ -59,6 +59,7 @@
 
 .resultPanel {
   display: grid;
+  align-self: stretch;
   align-items: start;
   background:
     linear-gradient(180deg, rgba(255, 251, 239, 0.96), rgba(242, 249, 238, 0.98)),

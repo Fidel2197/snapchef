@@ -118,6 +118,60 @@ const storyCards = [
   },
 ];
 
+const prepGuideCards = [
+  {
+    label: "Best photos",
+    value: "Use bright lighting and keep the whole plate visible.",
+  },
+  {
+    label: "Budget results",
+    value: "Pick College budget to get price ranges and cheaper swaps.",
+  },
+  {
+    label: "Allergy notes",
+    value: "Add foods to avoid in Extra notes before analyzing.",
+  },
+  {
+    label: "Servings",
+    value: "Change servings first so ingredient amounts and cost estimates scale.",
+  },
+  {
+    label: "Equipment",
+    value: "Mention air fryer, microwave, dorm kitchen, or no oven if it matters.",
+  },
+  {
+    label: "Good examples",
+    value: "Try pasta, wraps, rice bowls, salads, tacos, soups, or leftovers.",
+  },
+];
+
+const scanGuideCards = [
+  {
+    label: "Reading image",
+    value: "SnapChef checks the dish, visible toppings, sauces, and serving size.",
+  },
+  {
+    label: "Applying preferences",
+    value: "Your chips shape the recipe, shopping plan, swaps, and video searches.",
+  },
+  {
+    label: "Building plan",
+    value: "The final result includes recipe steps, estimated cost, and safety notes.",
+  },
+  {
+    label: "Confidence",
+    value: "Clear photos usually get higher confidence than blurry or cropped photos.",
+  },
+  {
+    label: "Shopping",
+    value: "Prices are rough ranges because every store and brand is different.",
+  },
+  {
+    label: "Videos",
+    value: "Links open YouTube searches so you can pick the tutorial you like.",
+  },
+];
+
 const exampleResult: SnapChefResult = {
   dishName: "Tomato Basil Pasta",
   confidence: "medium",
@@ -380,36 +434,36 @@ export default function SnapChefApp() {
 
         {!isScanActive ? (
           <div className={styles.heroGrid}>
-          <div className={styles.brandBar}>
-            <p className={styles.eyebrow}>Food photo to recipe</p>
-            <h1>Turn a food photo into dinner plans.</h1>
-            <p className={styles.subtitle}>
-              Upload a plate, get a likely dish, ingredient list, recipe steps, swaps, and cooking
-              video searches.
-            </p>
-            <div className={styles.metricRow} aria-label="SnapChef capabilities">
-              <span>Dish ID</span>
-              <span>Estimated prices</span>
-              <span>Recipe steps</span>
-            </div>
-            <div className={styles.storyGrid} aria-label="SnapChef flow">
-              {storyCards.map((card) => (
-                <article
-                  className={styles.storyCard}
-                  key={card.title}
-                  style={{
-                    backgroundImage: `linear-gradient(180deg, rgba(10, 24, 18, 0.06), rgba(10, 24, 18, 0.78)), url(${card.image})`,
-                  }}
-                >
-                  <div>
-                    <strong>{card.title}</strong>
-                    <span>{card.detail}</span>
-                  </div>
-                </article>
-              ))}
+            <div className={styles.brandBar}>
+              <p className={styles.eyebrow}>Food photo to recipe</p>
+              <h1>Turn a food photo into dinner plans.</h1>
+              <p className={styles.subtitle}>
+                Upload a plate, get a likely dish, ingredient list, recipe steps, swaps, and
+                cooking video searches.
+              </p>
+              <div className={styles.metricRow} aria-label="SnapChef capabilities">
+                <span>Dish ID</span>
+                <span>Estimated prices</span>
+                <span>Recipe steps</span>
+              </div>
+              <div className={styles.storyGrid} aria-label="SnapChef flow">
+                {storyCards.map((card) => (
+                  <article
+                    className={styles.storyCard}
+                    key={card.title}
+                    style={{
+                      backgroundImage: `linear-gradient(180deg, rgba(10, 24, 18, 0.06), rgba(10, 24, 18, 0.78)), url(${card.image})`,
+                    }}
+                  >
+                    <div>
+                      <strong>{card.title}</strong>
+                      <span>{card.detail}</span>
+                    </div>
+                  </article>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
         ) : null}
 
         <form className={styles.scanPanel} onSubmit={analyzeImage}>
@@ -522,6 +576,12 @@ export default function SnapChefApp() {
 
           {error ? <p className={styles.errorText}>{error}</p> : null}
         </form>
+
+        <SidebarGuide
+          activePreferenceSummary={activePreferenceSummary}
+          isAnalyzing={isAnalyzing}
+          result={result}
+        />
       </section>
 
       <section className={styles.resultPanel} aria-live="polite">
@@ -744,6 +804,89 @@ function ScanSummary({
         </button>
       </div>
     </section>
+  );
+}
+
+function SidebarGuide({
+  activePreferenceSummary,
+  isAnalyzing,
+  result,
+}: {
+  activePreferenceSummary: string;
+  isAnalyzing: boolean;
+  result: SnapChefResult | null;
+}) {
+  if (result) {
+    const cards = [
+      {
+        label: "Confidence",
+        value: `${result.confidence} match. Use the guide on the right to decide how much to trust it.`,
+      },
+      {
+        label: "Budget",
+        value: `${result.shoppingPlan.estimatedPerServing}. Open Shopping for stores, ranges, and saving tips.`,
+      },
+      {
+        label: "Next move",
+        value: "Review the ingredients first, then follow the recipe steps in order.",
+      },
+      {
+        label: "Video help",
+        value: `${result.searchLinks.length} YouTube searches are ready if you want to watch the method.`,
+      },
+      {
+        label: "Safety",
+        value: result.safetyNotes[0] || "Check allergens and cook proteins to a safe temperature.",
+      },
+      {
+        label: "Swaps",
+        value: result.substitutions[0] || "Use the substitutions list if an ingredient is missing.",
+      },
+    ];
+
+    return (
+      <section className={styles.sidebarGuide}>
+        <div className={styles.sidebarGuideHeader}>
+          <p className={styles.eyebrow}>Use this result</p>
+          <h2>No wasted space. Here is what to check next.</h2>
+        </div>
+        <GuideGrid cards={cards} />
+      </section>
+    );
+  }
+
+  return (
+    <section className={styles.sidebarGuide}>
+      <div className={styles.sidebarGuideHeader}>
+        <p className={styles.eyebrow}>{isAnalyzing ? "While it works" : "Before you scan"}</p>
+        <h2>{isAnalyzing ? "What SnapChef is checking." : "Make the result better."}</h2>
+      </div>
+      <GuideGrid cards={isAnalyzing ? scanGuideCards : prepGuideCards} />
+      {activePreferenceSummary ? (
+        <div className={styles.sidebarCallout}>
+          <span>Active preferences</span>
+          <strong>{activePreferenceSummary}</strong>
+        </div>
+      ) : (
+        <div className={styles.sidebarCallout}>
+          <span>Tip</span>
+          <strong>Add budget, allergy, equipment, or time notes before scanning.</strong>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function GuideGrid({ cards }: { cards: { label: string; value: string }[] }) {
+  return (
+    <div className={styles.guideGrid}>
+      {cards.map((card) => (
+        <span key={card.label}>
+          <small>{card.label}</small>
+          <strong>{card.value}</strong>
+        </span>
+      ))}
+    </div>
   );
 }
 

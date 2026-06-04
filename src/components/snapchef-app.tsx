@@ -172,6 +172,33 @@ const scanGuideCards = [
   },
 ];
 
+const starterDetailCards = [
+  {
+    label: "Confidence",
+    value: "High, medium, and low explain how clear the food match is.",
+  },
+  {
+    label: "Shopping",
+    value: "Get rough price ranges and where each ingredient usually sits in stores.",
+  },
+  {
+    label: "Preferences",
+    value: "Budget, protein, allergy, time, and equipment notes change the plan.",
+  },
+  {
+    label: "Swaps",
+    value: "Missing something? SnapChef suggests practical ingredient replacements.",
+  },
+  {
+    label: "Safety",
+    value: "Results include allergy and food-safety reminders when useful.",
+  },
+  {
+    label: "Videos",
+    value: "Open YouTube searches for the cooking method instead of guessing.",
+  },
+];
+
 const exampleResult: SnapChefResult = {
   dishName: "Tomato Basil Pasta",
   confidence: "medium",
@@ -690,6 +717,10 @@ export default function SnapChefApp() {
               <button className={styles.exampleButton} type="button" onClick={loadExample}>
                 See an example result
               </button>
+
+              <div className={styles.starterDetails}>
+                <GuideGrid cards={starterDetailCards} />
+              </div>
             </div>
           )}
         </div>
@@ -847,8 +878,8 @@ function SidebarGuide({
     return (
       <section className={styles.sidebarGuide}>
         <div className={styles.sidebarGuideHeader}>
-          <p className={styles.eyebrow}>Use this result</p>
-          <h2>No wasted space. Here is what to check next.</h2>
+          <p className={styles.eyebrow}>Result checklist</p>
+          <h2>What to check next.</h2>
         </div>
         <GuideGrid cards={cards} />
       </section>

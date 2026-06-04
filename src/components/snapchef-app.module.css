@@ -2,10 +2,15 @@
   min-height: 100vh;
   display: grid;
   grid-template-columns: minmax(380px, 1fr) minmax(420px, 0.9fr);
+  align-items: start;
   background:
     radial-gradient(circle at 18% 12%, rgba(244, 185, 86, 0.22), transparent 32rem),
     linear-gradient(135deg, #10241d 0%, #17221e 46%, #2d2a22 100%);
   color: #fbfff8;
+}
+
+.activeShell {
+  grid-template-columns: 1fr;
 }
 
 .workspace,
@@ -21,16 +26,27 @@
 }
 
 .activeShell .workspace {
-  position: sticky;
-  top: 0;
-  align-self: start;
+  position: static;
+  display: grid;
+  grid-template-columns: minmax(300px, 0.82fr) minmax(420px, 1fr);
   align-content: start;
-  max-height: 100vh;
-  overflow-y: auto;
+  max-height: none;
+  overflow: visible;
+}
+
+.activeShell .workspace,
+.activeShell .resultPanel {
+  min-height: auto;
+}
+
+.activeShell .appHeader,
+.activeShell .sidebarGuide {
+  grid-column: 1 / -1;
 }
 
 .activeShell .resultPanel {
   align-items: start;
+  padding-top: 28px;
 }
 
 .activeShell .scanPanel {
@@ -688,6 +704,10 @@
   justify-self: center;
 }
 
+.activeShell .resultCanvas {
+  width: min(100%, 980px);
+}
+
 .resultPhoto {
   position: relative;
   min-height: 220px;
@@ -1065,6 +1085,28 @@
   align-self: start;
 }
 
+.starterDetails {
+  display: grid;
+  gap: 12px;
+}
+
+.starterDetails .guideGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.starterDetails .guideGrid span {
+  border-color: #dfe9dc;
+  background: #ffffff;
+}
+
+.starterDetails .guideGrid small {
+  color: #15803d;
+}
+
+.starterDetails .guideGrid strong {
+  color: #223129;
+}
+
 .emptyPhoto {
   min-height: 260px;
   display: flex;
@@ -1150,9 +1192,7 @@
   }
 
   .activeShell .workspace {
-    position: static;
-    max-height: none;
-    overflow: visible;
+    grid-template-columns: 1fr;
   }
 
   .brandBar h1 {

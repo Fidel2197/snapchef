@@ -1,0 +1,482 @@
+.shell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: minmax(320px, 0.95fr) minmax(360px, 1.05fr);
+  background:
+    linear-gradient(140deg, rgba(13, 37, 33, 0.96), rgba(23, 31, 40, 0.92)),
+    url("/snapchef-kitchen.png");
+  background-size: cover;
+  background-position: center;
+  color: #f8faf7;
+}
+
+.workspace,
+.resultPanel {
+  min-height: 100vh;
+  padding: 42px;
+}
+
+.workspace {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 26px;
+}
+
+.resultPanel {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 24px;
+  background: rgba(250, 252, 246, 0.96);
+  color: #16201d;
+}
+
+.brandBar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.eyebrow {
+  margin-bottom: 8px;
+  color: #76d0a8;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.brandBar h1,
+.resultHeader h2,
+.emptyState h2 {
+  max-width: 640px;
+  font-size: clamp(2rem, 5vw, 4.3rem);
+  line-height: 0.98;
+  letter-spacing: 0;
+}
+
+.statusBadge,
+.confidencePill {
+  flex: 0 0 auto;
+  min-width: 112px;
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 999px;
+  color: #dcfce7;
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.scanPanel {
+  display: grid;
+  gap: 18px;
+}
+
+.dropzone {
+  min-height: 360px;
+  display: grid;
+  place-items: center;
+  border: 1px dashed rgba(255, 255, 255, 0.48);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color 180ms ease, background 180ms ease, transform 180ms ease;
+}
+
+.dropzone:hover {
+  border-color: #f9735b;
+  background: rgba(249, 115, 91, 0.1);
+}
+
+.dropzone input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.dropzoneContent {
+  display: grid;
+  gap: 10px;
+  text-align: center;
+}
+
+.dropzoneTitle {
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+.dropzoneMeta {
+  color: #c7d7cf;
+  font-size: 0.95rem;
+}
+
+.previewImage {
+  width: 100%;
+  height: 100%;
+  max-height: 460px;
+  object-fit: cover;
+}
+
+.controls {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  gap: 12px;
+}
+
+.field {
+  display: grid;
+  gap: 8px;
+}
+
+.field span {
+  color: #dbe8e2;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.field input {
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 8px;
+  padding: 0 14px;
+  color: #f8faf7;
+  background: rgba(255, 255, 255, 0.1);
+  font: inherit;
+}
+
+.field input::placeholder {
+  color: #9fb0a9;
+}
+
+.field input:focus-visible,
+.primaryButton:focus-visible,
+.secondaryButton:focus-visible,
+.iconButton:focus-visible,
+.tabs button:focus-visible,
+.videoList a:focus-visible {
+  outline: 3px solid #76d0a8;
+  outline-offset: 3px;
+}
+
+.actionRow {
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) minmax(120px, auto) minmax(96px, auto);
+  gap: 12px;
+}
+
+.primaryButton,
+.secondaryButton,
+.iconButton {
+  min-height: 48px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0 18px;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.primaryButton {
+  color: #ffffff;
+  background: #f05d4f;
+}
+
+.primaryButton:disabled {
+  cursor: wait;
+  opacity: 0.72;
+}
+
+.secondaryButton {
+  color: #f8faf7;
+  border-color: rgba(255, 255, 255, 0.24);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.iconButton {
+  color: #dbe8e2;
+  border-color: rgba(255, 255, 255, 0.18);
+  background: transparent;
+}
+
+.errorText {
+  color: #fecaca;
+  font-weight: 700;
+}
+
+.resultHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.resultHeader .eyebrow,
+.emptyState .eyebrow {
+  color: #15803d;
+}
+
+.resultHeader h2,
+.emptyState h2 {
+  font-size: clamp(2rem, 4vw, 3.5rem);
+  color: #12211c;
+}
+
+.confidencePill {
+  min-width: 92px;
+  color: #14532d;
+  border-color: rgba(21, 128, 61, 0.2);
+  background: #dcfce7;
+  text-transform: capitalize;
+}
+
+.summary,
+.notice {
+  max-width: 720px;
+  color: #4b5b54;
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+.notice {
+  padding: 12px 14px;
+  border-left: 4px solid #f05d4f;
+  background: #fff4ed;
+  color: #7c2d12;
+}
+
+.tabs {
+  display: inline-grid;
+  grid-template-columns: repeat(3, minmax(110px, 1fr));
+  gap: 6px;
+  max-width: 430px;
+  padding: 6px;
+  border-radius: 8px;
+  background: #eaf0ea;
+}
+
+.tabs button {
+  min-height: 42px;
+  border: 0;
+  border-radius: 6px;
+  color: #52635c;
+  background: transparent;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.tabs .activeTab {
+  color: #ffffff;
+  background: #18241f;
+}
+
+.recipeView,
+.ingredientsView,
+.videoList,
+.emptyState {
+  display: grid;
+  gap: 22px;
+}
+
+.recipeStats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.recipeStats span {
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: #f1f5ef;
+  color: #34423d;
+  font-weight: 800;
+}
+
+.recipeView h3,
+.infoBlock h3 {
+  font-size: 1.1rem;
+  color: #12211c;
+}
+
+.stepList {
+  display: grid;
+  gap: 12px;
+  list-style: none;
+  counter-reset: recipe-step;
+}
+
+.stepList li {
+  min-height: 58px;
+  display: grid;
+  grid-template-columns: 42px 1fr;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 14px 36px rgba(20, 30, 26, 0.08);
+  color: #35443e;
+  line-height: 1.55;
+  counter-increment: recipe-step;
+}
+
+.stepList li::before {
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: #ffffff;
+  background: #15803d;
+  font-weight: 900;
+  content: counter(recipe-step);
+}
+
+.ingredientGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  list-style: none;
+}
+
+.ingredientGrid li {
+  min-height: 104px;
+  display: grid;
+  gap: 6px;
+  align-content: start;
+  padding: 16px;
+  border: 1px solid #e0e8e2;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.ingredientGrid strong {
+  color: #12211c;
+}
+
+.ingredientGrid span {
+  color: #15803d;
+  font-weight: 800;
+}
+
+.ingredientGrid small,
+.infoBlock li {
+  color: #56665f;
+  line-height: 1.55;
+}
+
+.infoBlock {
+  display: grid;
+  gap: 10px;
+}
+
+.infoBlock ul {
+  display: grid;
+  gap: 8px;
+  padding-left: 18px;
+}
+
+.videoList {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.videoList a {
+  min-height: 128px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 18px;
+  border-radius: 8px;
+  color: #12211c;
+  background: #ffffff;
+  box-shadow: 0 14px 36px rgba(20, 30, 26, 0.08);
+}
+
+.videoList strong {
+  color: #f05d4f;
+}
+
+.emptyState {
+  align-self: center;
+  width: min(100%, 560px);
+}
+
+.emptyGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.emptyGrid span {
+  min-height: 92px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #e0e8e2;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #53635d;
+  font-weight: 800;
+}
+
+@media (max-width: 980px) {
+  .shell {
+    grid-template-columns: 1fr;
+  }
+
+  .workspace,
+  .resultPanel {
+    min-height: auto;
+    padding: 30px;
+  }
+
+  .workspace {
+    padding-top: 44px;
+  }
+}
+
+@media (max-width: 640px) {
+  .workspace,
+  .resultPanel {
+    padding: 22px;
+  }
+
+  .brandBar,
+  .resultHeader {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .dropzone {
+    min-height: 280px;
+  }
+
+  .controls,
+  .actionRow,
+  .ingredientGrid,
+  .videoList,
+  .emptyGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .tabs {
+    width: 100%;
+    grid-template-columns: 1fr;
+  }
+}

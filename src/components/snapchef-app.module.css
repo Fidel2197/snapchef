@@ -222,6 +222,20 @@
   padding: 0 14px;
 }
 
+.clearPresetButton {
+  min-height: 34px;
+  flex: 0 0 auto;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 8px;
+  padding: 0 12px;
+  color: #f8fff7;
+  background: transparent;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 900;
+  cursor: pointer;
+}
+
 .dropzone {
   position: relative;
   min-height: 210px;
@@ -334,12 +348,39 @@
 .primaryButton:focus-visible,
 .secondaryButton:focus-visible,
 .ghostButton:focus-visible,
+.clearPresetButton:focus-visible,
 .exampleButton:focus-visible,
 .presetRow button:focus-visible,
 .tabs button:focus-visible,
 .videoList a:focus-visible {
   outline: 3px solid #9ee6a8;
   outline-offset: 3px;
+}
+
+.preferenceBlock {
+  display: grid;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.preferenceHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.preferenceHeader h3 {
+  color: #ffffff;
+  font-size: 1.02rem;
+  line-height: 1.25;
+}
+
+.helperText {
+  color: #c9dbd2;
+  font-size: 0.9rem;
+  line-height: 1.5;
 }
 
 .presetRow {
@@ -361,6 +402,28 @@
   border-color: rgba(248, 195, 91, 0.8);
   color: #1a2018;
   background: #f8c35b;
+}
+
+.activePreferenceBar {
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  border-radius: 8px;
+  color: #f8fff7;
+  background: rgba(8, 22, 17, 0.34);
+}
+
+.activePreferenceBar span {
+  color: #9ee6a8;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.activePreferenceBar strong {
+  font-size: 0.9rem;
+  line-height: 1.45;
 }
 
 .actionRow {
@@ -468,7 +531,7 @@
 
 .insightStrip {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
 }
 
@@ -481,9 +544,9 @@
 
 .tabs {
   display: inline-grid;
-  grid-template-columns: repeat(3, minmax(105px, 1fr));
+  grid-template-columns: repeat(4, minmax(96px, 1fr));
   gap: 6px;
-  max-width: 430px;
+  max-width: 540px;
   padding: 6px;
   border-radius: 8px;
   background: #e9f2e4;
@@ -507,10 +570,160 @@
 
 .recipeView,
 .ingredientsView,
+.shoppingView,
 .videoList,
 .emptyState {
   display: grid;
   gap: 18px;
+}
+
+.confidenceGuide,
+.appliedPreferences {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid #dfe9dc;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.confidenceGuideHeader,
+.appliedPreferences {
+  color: #314039;
+}
+
+.confidenceGuideHeader {
+  display: grid;
+  gap: 5px;
+}
+
+.confidenceGuideHeader span,
+.appliedPreferences span,
+.budgetSummary small {
+  color: #15803d;
+  font-size: 0.76rem;
+  font-weight: 900;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.confidenceGuideHeader strong,
+.appliedPreferences strong {
+  color: #12211c;
+  line-height: 1.45;
+}
+
+.confidenceLevels {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.confidenceLevels span {
+  min-height: 118px;
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  padding: 12px;
+  border: 1px solid #e8efe6;
+  border-radius: 8px;
+  background: #f8fbf5;
+}
+
+.confidenceLevels .activeConfidence {
+  border-color: rgba(21, 128, 61, 0.35);
+  background: #e8f8dc;
+}
+
+.confidenceLevels strong {
+  color: #12211c;
+}
+
+.confidenceLevels small {
+  color: #53635d;
+  line-height: 1.45;
+}
+
+.budgetSummary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.budgetSummary span {
+  min-height: 96px;
+  display: grid;
+  gap: 8px;
+  align-content: center;
+  padding: 16px;
+  border: 1px solid #dfe9dc;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.budgetSummary strong {
+  color: #12211c;
+  font-size: 1.25rem;
+  line-height: 1.25;
+}
+
+.priceNote {
+  padding: 12px 14px;
+  border-left: 4px solid #15803d;
+  border-radius: 8px;
+  background: #eef8e7;
+  color: #33463d;
+  line-height: 1.55;
+}
+
+.shoppingGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  list-style: none;
+}
+
+.shoppingGrid li {
+  min-height: 158px;
+  display: grid;
+  gap: 9px;
+  align-content: start;
+  padding: 16px;
+  border: 1px solid #e0e8e2;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.shoppingGrid li div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.shoppingGrid strong {
+  color: #12211c;
+}
+
+.shoppingGrid span {
+  color: #15803d;
+  font-weight: 900;
+  text-align: right;
+}
+
+.shoppingGrid p {
+  color: #f05d4f;
+  font-size: 1.08rem;
+  font-weight: 900;
+}
+
+.shoppingGrid small,
+.shoppingGrid em {
+  color: #56665f;
+  line-height: 1.45;
+}
+
+.shoppingGrid em {
+  font-style: normal;
 }
 
 .recipeStats {
@@ -786,7 +999,10 @@
   .storyGrid,
   .presetRow,
   .insightStrip,
+  .confidenceLevels,
+  .budgetSummary,
   .ingredientGrid,
+  .shoppingGrid,
   .videoList,
   .emptyGrid {
     grid-template-columns: 1fr;

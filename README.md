@@ -5,9 +5,10 @@ SnapChef is a food image assistant that turns a food photo or screenshot into a 
 ## What It Does
 
 - Upload a JPG, PNG, or WebP food image
-- Add servings and optional preferences
+- Add servings, custom notes, and multiple preference chips
 - Analyze the image through a server-side Gemini or OpenAI route
-- Show recipe, ingredients, and video-search views
+- Show recipe, ingredients, shopping estimates, confidence guidance, and video-search views
+- Estimate rough grocery price ranges and where to find ingredients
 - Show an example response when no AI provider key is configured
 
 ## Tech Stack

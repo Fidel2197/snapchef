@@ -7,6 +7,22 @@ type Ingredient = {
   note?: string;
 };
 
+type ShoppingItem = {
+  name: string;
+  amount?: string;
+  estimatedPrice?: string;
+  whereToFind?: string;
+  note?: string;
+};
+
+type ShoppingPlan = {
+  estimatedTotal: string;
+  estimatedPerServing: string;
+  priceNote: string;
+  items: ShoppingItem[];
+  savingTips: string[];
+};
+
 type SearchLink = {
   label: string;
   url: string;
@@ -28,6 +44,8 @@ type SnapChefResult = {
   nutritionNotes: string[];
   safetyNotes: string[];
   searchLinks: SearchLink[];
+  shoppingPlan: ShoppingPlan;
+  appliedPreferences: string[];
   exampleMode?: boolean;
   notice?: string;
 };
@@ -68,6 +86,55 @@ const exampleResult: SnapChefResult = {
     "Use low-sodium soy sauce if you are watching sodium.",
   ],
   safetyNotes: ["Reheat rice thoroughly and avoid leaving cooked rice out for long periods."],
+  shoppingPlan: {
+    estimatedTotal: "$8-$13 if buying the main items",
+    estimatedPerServing: "about $4-$6.50 per serving",
+    priceNote:
+      "Prices are rough US grocery estimates and vary by store, brand, sales, and what you already have at home.",
+    items: [
+      {
+        name: "Cooked rice",
+        amount: "2 cups",
+        estimatedPrice: "$1-$3",
+        whereToFind: "rice or grains aisle",
+        note: "A large bag is usually cheaper per serving.",
+      },
+      {
+        name: "Garlic",
+        amount: "3 cloves",
+        estimatedPrice: "$0.50-$1",
+        whereToFind: "produce section",
+        note: "Jarred garlic works if you need speed.",
+      },
+      {
+        name: "Mixed vegetables",
+        amount: "1 cup",
+        estimatedPrice: "$1.50-$3",
+        whereToFind: "frozen vegetables or produce section",
+        note: "Frozen vegetables are usually budget-friendly.",
+      },
+      {
+        name: "Egg",
+        amount: "1-2",
+        estimatedPrice: "$0.50-$1.50",
+        whereToFind: "dairy or egg section",
+        note: "Use tofu or beans if avoiding eggs.",
+      },
+      {
+        name: "Soy sauce",
+        amount: "1-2 tbsp",
+        estimatedPrice: "$2-$4",
+        whereToFind: "international foods or condiment aisle",
+        note: "One bottle covers many meals.",
+      },
+    ],
+    savingTips: [
+      "Use frozen vegetables to keep the cost predictable.",
+      "Cook extra rice once and use it for multiple meals.",
+      "Skip specialty toppings if the goal is the cheapest version.",
+    ],
+  },
+  appliedPreferences: ["college budget", "quick meal"],
   searchLinks: [
     {
       label: "Garlic fried rice recipe",
@@ -141,6 +208,37 @@ const snapChefSchema = {
         required: ["label", "url"],
       },
     },
+    shoppingPlan: {
+      type: "object",
+      properties: {
+        estimatedTotal: { type: "string" },
+        estimatedPerServing: { type: "string" },
+        priceNote: { type: "string" },
+        items: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              name: { type: "string" },
+              amount: { type: "string" },
+              estimatedPrice: { type: "string" },
+              whereToFind: { type: "string" },
+              note: { type: "string" },
+            },
+            required: ["name", "amount", "estimatedPrice", "whereToFind"],
+          },
+        },
+        savingTips: {
+          type: "array",
+          items: { type: "string" },
+        },
+      },
+      required: ["estimatedTotal", "estimatedPerServing", "priceNote", "items", "savingTips"],
+    },
+    appliedPreferences: {
+      type: "array",
+      items: { type: "string" },
+    },
   },
   required: [
     "dishName",
@@ -152,6 +250,8 @@ const snapChefSchema = {
     "nutritionNotes",
     "safetyNotes",
     "searchLinks",
+    "shoppingPlan",
+    "appliedPreferences",
   ],
 };
 
@@ -226,7 +326,7 @@ async function analyzeWithOpenAI(
           ],
         },
       ],
-      max_output_tokens: 1800,
+      max_output_tokens: 3000,
     }),
   });
 
@@ -249,7 +349,7 @@ async function analyzeWithOpenAI(
     );
   }
 
-  return Response.json(normalizeResult(parsed));
+  return Response.json(normalizeResult(parsed, { preferences }));
 }
 
 async function analyzeWithGemini(
@@ -316,7 +416,7 @@ async function analyzeWithGemini(
     );
   }
 
-  return Response.json(normalizeResult(parsed));
+  return Response.json(normalizeResult(parsed, { preferences }));
 }
 
 async function fileToDataUrl(file: File) {
@@ -350,14 +450,32 @@ JSON shape:
   "substitutions": ["string"],
   "nutritionNotes": ["string"],
   "safetyNotes": ["string"],
-  "searchLinks": [{"label": "string", "url": "https://www.youtube.com/results?search_query=..."}]
+  "searchLinks": [{"label": "string", "url": "https://www.youtube.com/results?search_query=..."}],
+  "shoppingPlan": {
+    "estimatedTotal": "string",
+    "estimatedPerServing": "string",
+    "priceNote": "string",
+    "items": [
+      {
+        "name": "string",
+        "amount": "string",
+        "estimatedPrice": "string",
+        "whereToFind": "string",
+        "note": "string"
+      }
+    ],
+    "savingTips": ["string"]
+  },
+  "appliedPreferences": ["string"]
 }
 
 Use ${servings || "2"} servings.
 Preferences: ${preferences || "none"}.
+Preferences should guide the recipe plan, substitutions, shopping estimates, nutrition angle, cooking method, and search links. They should not override what is visible in the photo. For example, if the user asks for vegetarian but meat is visible, identify the image honestly and suggest vegetarian swaps.
+For shoppingPlan, include rough US grocery price ranges, not exact or live prices. Include where to find each item using store sections or common budget-friendly options such as produce, frozen foods, canned goods, pantry aisle, dairy, Walmart, Aldi, Kroger, or a campus pantry when helpful.
 If the exact dish is uncertain, make the best likely guess and set confidence to low or medium.
 Search links must be YouTube search URLs, not individual video URLs.
-Do not claim exact calories. Mention allergy or food-safety uncertainty when useful.`;
+Do not claim exact calories or real-time grocery prices. Mention allergy or food-safety uncertainty when useful.`;
 }
 
 function extractOutputText(payload: unknown) {
@@ -427,9 +545,13 @@ function parseResult(text: string): Partial<SnapChefResult> | null {
   }
 }
 
-function normalizeResult(result: Partial<SnapChefResult>): SnapChefResult {
+function normalizeResult(
+  result: Partial<SnapChefResult>,
+  context: { preferences?: string } = {},
+): SnapChefResult {
   const dishName = fallbackString(result.dishName, "Unknown dish");
   const searchTerm = encodeURIComponent(`${dishName} recipe`);
+  const ingredients = normalizeIngredients(result.ingredients);
 
   return {
     dishName,
@@ -438,7 +560,7 @@ function normalizeResult(result: Partial<SnapChefResult>): SnapChefResult {
         ? result.confidence
         : "medium",
     summary: fallbackString(result.summary, "SnapChef found a likely recipe path for this dish."),
-    ingredients: normalizeIngredients(result.ingredients),
+    ingredients,
     recipe: {
       title: fallbackString(result.recipe?.title, `How to make ${dishName}`),
       time: fallbackString(result.recipe?.time, "30 minutes"),
@@ -457,6 +579,11 @@ function normalizeResult(result: Partial<SnapChefResult>): SnapChefResult {
     ]),
     searchLinks:
       result.searchLinks?.length ? normalizeLinks(result.searchLinks) : defaultLinks(dishName, searchTerm),
+    shoppingPlan: normalizeShoppingPlan(result.shoppingPlan, ingredients),
+    appliedPreferences: normalizeAppliedPreferences(
+      result.appliedPreferences,
+      context.preferences || "",
+    ),
   };
 }
 
@@ -490,6 +617,57 @@ function normalizeLinks(value: SearchLink[]) {
       label: fallbackString(link.label, "Watch tutorial"),
       url: link.url,
     }));
+}
+
+function normalizeShoppingPlan(
+  shoppingPlan: Partial<ShoppingPlan> | undefined,
+  ingredients: Ingredient[],
+): ShoppingPlan {
+  const fallbackItems = ingredients.slice(0, 8).map((ingredient) => ({
+    name: ingredient.name,
+    amount: ingredient.amount || "as needed",
+    estimatedPrice: "varies",
+    whereToFind: "grocery store",
+    note: ingredient.note || "Estimate based on the image and recipe plan.",
+  }));
+
+  const items = Array.isArray(shoppingPlan?.items)
+    ? shoppingPlan.items.slice(0, 10).map((item) => ({
+        name: fallbackString(item.name, "Ingredient"),
+        amount: fallbackString(item.amount, "as needed"),
+        estimatedPrice: fallbackString(item.estimatedPrice, "varies"),
+        whereToFind: fallbackString(item.whereToFind, "grocery store"),
+        note: fallbackString(item.note, ""),
+      }))
+    : fallbackItems;
+
+  return {
+    estimatedTotal: fallbackString(shoppingPlan?.estimatedTotal, "price varies by store"),
+    estimatedPerServing: fallbackString(shoppingPlan?.estimatedPerServing, "depends on serving size"),
+    priceNote: fallbackString(
+      shoppingPlan?.priceNote,
+      "Prices are rough estimates and vary by store, brand, sales, and what you already own.",
+    ),
+    items: items.length ? items : fallbackItems,
+    savingTips: normalizeStringList(shoppingPlan?.savingTips, [
+      "Compare store brands before buying name-brand ingredients.",
+      "Use pantry staples you already have before buying every listed item.",
+    ]),
+  };
+}
+
+function normalizeAppliedPreferences(value: unknown, preferences: string) {
+  const fromModel = normalizeStringList(value, []);
+
+  if (fromModel.length) {
+    return fromModel.slice(0, 8);
+  }
+
+  return preferences
+    .split(",")
+    .map((preference) => preference.trim())
+    .filter(Boolean)
+    .slice(0, 8);
 }
 
 function defaultLinks(dishName: string, searchTerm: string) {

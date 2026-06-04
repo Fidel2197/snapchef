@@ -11,6 +11,22 @@ type Ingredient = {
   note?: string;
 };
 
+type ShoppingItem = {
+  name: string;
+  amount?: string;
+  estimatedPrice?: string;
+  whereToFind?: string;
+  note?: string;
+};
+
+type ShoppingPlan = {
+  estimatedTotal: string;
+  estimatedPerServing: string;
+  priceNote: string;
+  items: ShoppingItem[];
+  savingTips: string[];
+};
+
 type Recipe = {
   title: string;
   time: string;
@@ -34,6 +50,8 @@ type SnapChefResult = {
   nutritionNotes: string[];
   safetyNotes: string[];
   searchLinks: SearchLink[];
+  shoppingPlan: ShoppingPlan;
+  appliedPreferences: string[];
   exampleMode?: boolean;
   notice?: string;
 };
@@ -42,18 +60,42 @@ type ApiError = {
   error: string;
 };
 
-type ResultTab = "recipe" | "ingredients" | "videos";
+type ResultTab = "recipe" | "ingredients" | "shopping" | "videos";
 
 const preferencePresets = [
-  { label: "College budget", value: "college budget, quick, cheap ingredients" },
+  { label: "College budget", value: "college budget, cheap ingredients, price estimates" },
   { label: "High protein", value: "high protein, filling, meal prep friendly" },
   { label: "Vegetarian", value: "vegetarian, no meat, beginner friendly" },
   { label: "Spicy", value: "spicy, bold flavor, easy swaps" },
+  { label: "15-minute", value: "15 minute meal, minimal prep, quick cleanup" },
+  { label: "Dairy-free", value: "dairy free, avoid milk cheese butter cream" },
+  { label: "No peanuts", value: "no peanuts, peanut allergy aware" },
+  { label: "Meal prep", value: "meal prep friendly, leftovers, reheats well" },
 ];
+
+const confidenceGuide = [
+  {
+    level: "high",
+    label: "High",
+    detail: "The dish is visually clear, so the match is likely reliable.",
+  },
+  {
+    level: "medium",
+    label: "Medium",
+    detail: "The dish looks familiar, but some ingredients may be guessed.",
+  },
+  {
+    level: "low",
+    label: "Low",
+    detail: "The photo is unclear or the dish is ambiguous, so double-check the result.",
+  },
+] satisfies { level: Confidence; label: string; detail: string }[];
 
 const previewTiles = [
   { label: "Dish", value: "Likely match" },
   { label: "Ingredients", value: "Pantry list" },
+  { label: "Budget", value: "Price ranges" },
+  { label: "Shopping", value: "Where to find it" },
   { label: "Steps", value: "Cookable plan" },
   { label: "Videos", value: "Search links" },
 ];
@@ -112,6 +154,55 @@ const exampleResult: SnapChefResult = {
     "Add grilled chicken, tofu, or beans for more protein.",
   ],
   safetyNotes: ["Check labels for gluten or dairy allergens."],
+  shoppingPlan: {
+    estimatedTotal: "$10-$16 if buying the main items",
+    estimatedPerServing: "about $5-$8 per serving",
+    priceNote:
+      "Prices are rough US grocery estimates and can change by store, brand, sales, and what is already in your kitchen.",
+    items: [
+      {
+        name: "Pasta",
+        amount: "8 oz",
+        estimatedPrice: "$1-$2",
+        whereToFind: "pasta aisle",
+        note: "Store-brand pasta is usually the cheapest choice.",
+      },
+      {
+        name: "Tomatoes",
+        amount: "2 cups",
+        estimatedPrice: "$1.50-$3",
+        whereToFind: "canned goods or produce section",
+        note: "Canned crushed tomatoes keep the cost low.",
+      },
+      {
+        name: "Garlic",
+        amount: "3 cloves",
+        estimatedPrice: "$0.50-$1",
+        whereToFind: "produce section",
+        note: "One bulb covers several meals.",
+      },
+      {
+        name: "Fresh basil",
+        amount: "1 small handful",
+        estimatedPrice: "$2-$4",
+        whereToFind: "produce section",
+        note: "Use dried Italian seasoning if basil is too expensive.",
+      },
+      {
+        name: "Parmesan",
+        amount: "1/3 cup",
+        estimatedPrice: "$3-$5",
+        whereToFind: "cheese or dairy section",
+        note: "Optional if you need to cut the price.",
+      },
+    ],
+    savingTips: [
+      "Use canned tomatoes instead of fresh tomatoes for a cheaper sauce.",
+      "Skip parmesan or use a small amount as a topping.",
+      "Buy store-brand pasta and save the extra servings for another meal.",
+    ],
+  },
+  appliedPreferences: ["college budget", "quick meal"],
   searchLinks: [
     {
       label: "Tomato basil pasta tutorial",
@@ -128,7 +219,8 @@ const exampleResult: SnapChefResult = {
 export default function SnapChefApp() {
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState("");
-  const [preferences, setPreferences] = useState("");
+  const [selectedPresets, setSelectedPresets] = useState<string[]>([]);
+  const [customPreferences, setCustomPreferences] = useState("");
   const [servings, setServings] = useState("2");
   const [result, setResult] = useState<SnapChefResult | null>(null);
   const [activeTab, setActiveTab] = useState<ResultTab>("recipe");
@@ -138,13 +230,32 @@ export default function SnapChefApp() {
 
   const confidenceText = useMemo(() => {
     if (!result) {
-      return "Ready";
+      return "Ready to scan";
     }
 
     return `${result.confidence[0].toUpperCase()}${result.confidence.slice(1)} confidence`;
   }, [result]);
 
+  const preferences = useMemo(
+    () => [...selectedPresets, customPreferences.trim()].filter(Boolean).join(", "),
+    [customPreferences, selectedPresets],
+  );
+
+  const activePreferenceSummary = useMemo(() => {
+    const selectedLabels = preferencePresets
+      .filter((preset) => selectedPresets.includes(preset.value))
+      .map((preset) => preset.label);
+
+    return [...selectedLabels, customPreferences.trim()].filter(Boolean).join(", ");
+  }, [customPreferences, selectedPresets]);
+
   const resultPhoto = previewUrl || "/snapchef-food-board.png";
+
+  function togglePreset(value: string) {
+    setSelectedPresets((current) =>
+      current.includes(value) ? current.filter((item) => item !== value) : [...current, value],
+    );
+  }
 
   function chooseFile(selectedFile?: File) {
     if (!selectedFile) {
@@ -232,6 +343,8 @@ export default function SnapChefApp() {
     setPreviewUrl("");
     setResult(null);
     setError("");
+    setSelectedPresets([]);
+    setCustomPreferences("");
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -258,7 +371,7 @@ export default function SnapChefApp() {
             </p>
             <div className={styles.metricRow} aria-label="SnapChef capabilities">
               <span>Dish ID</span>
-              <span>Ingredients</span>
+              <span>Estimated prices</span>
               <span>Recipe steps</span>
             </div>
             <div className={styles.storyGrid} aria-label="SnapChef flow">
@@ -330,26 +443,53 @@ export default function SnapChefApp() {
               />
             </label>
             <label className={styles.field}>
-              <span>Preferences</span>
+              <span>Extra notes</span>
               <input
-                value={preferences}
-                onChange={(event) => setPreferences(event.target.value)}
-                placeholder="budget, spicy, vegetarian, no peanuts"
+                value={customPreferences}
+                onChange={(event) => setCustomPreferences(event.target.value)}
+                placeholder="no pork, dorm kitchen, air fryer, no peanuts"
               />
             </label>
           </div>
 
-          <div className={styles.presetRow} aria-label="Preference presets">
-            {preferencePresets.map((preset) => (
-              <button
-                className={preferences === preset.value ? styles.selectedPreset : ""}
-                key={preset.label}
-                onClick={() => setPreferences(preset.value)}
-                type="button"
-              >
-                {preset.label}
-              </button>
-            ))}
+          <div className={styles.preferenceBlock}>
+            <div className={styles.preferenceHeader}>
+              <div>
+                <p className={styles.eyebrow}>Preferences</p>
+                <h3>Choose what should shape the result</h3>
+              </div>
+              {activePreferenceSummary ? (
+                <button className={styles.clearPresetButton} type="button" onClick={() => {
+                  setSelectedPresets([]);
+                  setCustomPreferences("");
+                }}>
+                  Clear
+                </button>
+              ) : null}
+            </div>
+            <p className={styles.helperText}>
+              The photo still decides the dish. These options adjust the recipe, swaps, shopping
+              estimates, and video searches after SnapChef identifies it.
+            </p>
+            <div className={styles.presetRow} aria-label="Preference presets">
+              {preferencePresets.map((preset) => (
+                <button
+                  aria-pressed={selectedPresets.includes(preset.value)}
+                  className={selectedPresets.includes(preset.value) ? styles.selectedPreset : ""}
+                  key={preset.label}
+                  onClick={() => togglePreset(preset.value)}
+                  type="button"
+                >
+                  {preset.label}
+                </button>
+              ))}
+            </div>
+            {activePreferenceSummary ? (
+              <div className={styles.activePreferenceBar}>
+                <span>Active</span>
+                <strong>{activePreferenceSummary}</strong>
+              </div>
+            ) : null}
           </div>
 
           <div className={styles.actionRow}>
@@ -389,9 +529,19 @@ export default function SnapChefApp() {
 
               {result.notice ? <p className={styles.notice}>{result.notice}</p> : null}
 
+              <ConfidenceGuide confidence={result.confidence} />
+
+              {result.appliedPreferences?.length ? (
+                <div className={styles.appliedPreferences}>
+                  <span>Preferences used</span>
+                  <strong>{result.appliedPreferences.join(", ")}</strong>
+                </div>
+              ) : null}
+
               <div className={styles.insightStrip}>
                 <span>{result.ingredients.length} ingredients</span>
                 <span>{result.recipe.time}</span>
+                <span>{result.shoppingPlan.estimatedPerServing}</span>
                 <span>{result.searchLinks.length} video searches</span>
               </div>
 
@@ -411,6 +561,13 @@ export default function SnapChefApp() {
                   Ingredients
                 </button>
                 <button
+                  className={activeTab === "shopping" ? styles.activeTab : ""}
+                  onClick={() => setActiveTab("shopping")}
+                  type="button"
+                >
+                  Shopping
+                </button>
+                <button
                   className={activeTab === "videos" ? styles.activeTab : ""}
                   onClick={() => setActiveTab("videos")}
                   type="button"
@@ -421,6 +578,7 @@ export default function SnapChefApp() {
 
               {activeTab === "recipe" ? <RecipeView result={result} /> : null}
               {activeTab === "ingredients" ? <IngredientsView result={result} /> : null}
+              {activeTab === "shopping" ? <ShoppingView result={result} /> : null}
               {activeTab === "videos" ? <VideosView result={result} /> : null}
             </>
           ) : (
@@ -479,6 +637,28 @@ function RecipeView({ result }: { result: SnapChefResult }) {
   );
 }
 
+function ConfidenceGuide({ confidence }: { confidence: Confidence }) {
+  return (
+    <div className={styles.confidenceGuide}>
+      <div className={styles.confidenceGuideHeader}>
+        <span>Confidence guide</span>
+        <strong>{confidence} confidence means SnapChef is estimating from the photo.</strong>
+      </div>
+      <div className={styles.confidenceLevels}>
+        {confidenceGuide.map((item) => (
+          <span
+            className={item.level === confidence ? styles.activeConfidence : ""}
+            key={item.level}
+          >
+            <strong>{item.label}</strong>
+            <small>{item.detail}</small>
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function IngredientsView({ result }: { result: SnapChefResult }) {
   return (
     <div className={styles.ingredientsView}>
@@ -494,6 +674,40 @@ function IngredientsView({ result }: { result: SnapChefResult }) {
       <InfoList title="Substitutions" items={result.substitutions} />
       <InfoList title="Nutrition notes" items={result.nutritionNotes} />
       <InfoList title="Safety notes" items={result.safetyNotes} />
+    </div>
+  );
+}
+
+function ShoppingView({ result }: { result: SnapChefResult }) {
+  return (
+    <div className={styles.shoppingView}>
+      <div className={styles.budgetSummary}>
+        <span>
+          <small>Estimated total</small>
+          <strong>{result.shoppingPlan.estimatedTotal}</strong>
+        </span>
+        <span>
+          <small>Per serving</small>
+          <strong>{result.shoppingPlan.estimatedPerServing}</strong>
+        </span>
+      </div>
+      <p className={styles.priceNote}>{result.shoppingPlan.priceNote}</p>
+
+      <ul className={styles.shoppingGrid}>
+        {result.shoppingPlan.items.map((item) => (
+          <li key={`${item.name}-${item.amount ?? ""}`}>
+            <div>
+              <strong>{item.name}</strong>
+              <span>{item.amount || "as needed"}</span>
+            </div>
+            <p>{item.estimatedPrice || "varies"}</p>
+            <small>{item.whereToFind || "grocery store"}</small>
+            {item.note ? <em>{item.note}</em> : null}
+          </li>
+        ))}
+      </ul>
+
+      <InfoList title="Money-saving tips" items={result.shoppingPlan.savingTips} />
     </div>
   );
 }

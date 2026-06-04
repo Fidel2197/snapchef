@@ -58,6 +58,24 @@ const previewTiles = [
   { label: "Videos", value: "Search links" },
 ];
 
+const storyCards = [
+  {
+    title: "Scan the plate",
+    detail: "Start from a quick food photo, screenshot, or leftovers pic.",
+    image: "/snapchef-scan-pasta.png",
+  },
+  {
+    title: "Spot ingredients",
+    detail: "Turn what is visible into a useful shopping and pantry list.",
+    image: "/snapchef-ingredients-prep.png",
+  },
+  {
+    title: "Cook the plan",
+    detail: "Get steps, swaps, serving changes, and video searches.",
+    image: "/snapchef-cooking-plan.png",
+  },
+];
+
 const exampleResult: SnapChefResult = {
   dishName: "Tomato Basil Pasta",
   confidence: "medium",
@@ -242,6 +260,22 @@ export default function SnapChefApp() {
               <span>Dish ID</span>
               <span>Ingredients</span>
               <span>Recipe steps</span>
+            </div>
+            <div className={styles.storyGrid} aria-label="SnapChef flow">
+              {storyCards.map((card) => (
+                <article
+                  className={styles.storyCard}
+                  key={card.title}
+                  style={{
+                    backgroundImage: `linear-gradient(180deg, rgba(10, 24, 18, 0.06), rgba(10, 24, 18, 0.78)), url(${card.image})`,
+                  }}
+                >
+                  <div>
+                    <strong>{card.title}</strong>
+                    <span>{card.detail}</span>
+                  </div>
+                </article>
+              ))}
             </div>
           </div>
         </div>

@@ -28,11 +28,11 @@ type SnapChefResult = {
   nutritionNotes: string[];
   safetyNotes: string[];
   searchLinks: SearchLink[];
-  demoMode?: boolean;
+  exampleMode?: boolean;
   notice?: string;
 };
 
-const sampleResult: SnapChefResult = {
+const exampleResult: SnapChefResult = {
   dishName: "Garlic Fried Rice Bowl",
   confidence: "medium",
   summary:
@@ -78,8 +78,8 @@ const sampleResult: SnapChefResult = {
       url: "https://www.youtube.com/results?search_query=easy+rice+bowl+recipe",
     },
   ],
-  demoMode: true,
-  notice: "Add GEMINI_API_KEY or OPENAI_API_KEY to .env.local to use real image analysis.",
+  exampleMode: true,
+  notice: "Connect Gemini to enable live image analysis.",
 };
 
 const snapChefSchema = {
@@ -192,9 +192,8 @@ export async function POST(request: Request) {
   }
 
   return Response.json({
-    ...sampleResult,
-    notice:
-      "Demo result shown because no Gemini or OpenAI API key is configured. Add GEMINI_API_KEY for the free-tier path.",
+    ...exampleResult,
+    notice: "Connect Gemini to enable live image analysis.",
   });
 }
 
@@ -203,7 +202,7 @@ async function analyzeWithOpenAI(
   { preferences, servings }: { preferences: string; servings: string },
 ) {
   if (!process.env.OPENAI_API_KEY) {
-    return Response.json(sampleResult);
+    return Response.json(exampleResult);
   }
 
   const dataUrl = await fileToDataUrl(image);
@@ -258,7 +257,7 @@ async function analyzeWithGemini(
   { preferences, servings }: { preferences: string; servings: string },
 ) {
   if (!process.env.GEMINI_API_KEY) {
-    return Response.json(sampleResult);
+    return Response.json(exampleResult);
   }
 
   const model = process.env.GEMINI_MODEL || "gemini-2.5-flash";

@@ -34,7 +34,7 @@ type SnapChefResult = {
   nutritionNotes: string[];
   safetyNotes: string[];
   searchLinks: SearchLink[];
-  demoMode?: boolean;
+  exampleMode?: boolean;
   notice?: string;
 };
 
@@ -52,13 +52,13 @@ const preferencePresets = [
 ];
 
 const previewTiles = [
-  { label: "Dish", value: "Tomato Basil Pasta" },
-  { label: "Time", value: "25 minutes" },
-  { label: "Ingredients", value: "7 likely items" },
-  { label: "Videos", value: "Search links ready" },
+  { label: "Dish", value: "Likely match" },
+  { label: "Ingredients", value: "Pantry list" },
+  { label: "Steps", value: "Cookable plan" },
+  { label: "Videos", value: "Search links" },
 ];
 
-const sampleResult: SnapChefResult = {
+const exampleResult: SnapChefResult = {
   dishName: "Tomato Basil Pasta",
   confidence: "medium",
   summary:
@@ -104,8 +104,7 @@ const sampleResult: SnapChefResult = {
       url: "https://www.youtube.com/results?search_query=easy+tomato+pasta+sauce+from+scratch",
     },
   ],
-  demoMode: true,
-  notice: "Demo result shown without calling Gemini.",
+  exampleMode: true,
 };
 
 export default function SnapChefApp() {
@@ -201,8 +200,8 @@ export default function SnapChefApp() {
     }
   }
 
-  function loadDemo() {
-    setResult(sampleResult);
+  function loadExample() {
+    setResult(exampleResult);
     setActiveTab("recipe");
     setError("");
   }
@@ -233,7 +232,7 @@ export default function SnapChefApp() {
 
         <div className={styles.heroGrid}>
           <div className={styles.brandBar}>
-            <p className={styles.eyebrow}>AI recipe camera</p>
+            <p className={styles.eyebrow}>Food photo to recipe</p>
             <h1>Turn a food photo into dinner plans.</h1>
             <p className={styles.subtitle}>
               Upload a plate, get a likely dish, ingredient list, recipe steps, swaps, and cooking
@@ -245,18 +244,6 @@ export default function SnapChefApp() {
               <span>Recipe steps</span>
             </div>
           </div>
-
-          <div className={styles.foodShowcase} aria-hidden="true">
-            <div className={styles.scanCard}>
-              <span>Likely dish</span>
-              <strong>Tomato Basil Pasta</strong>
-              <small>25 min plan ready</small>
-            </div>
-            <div className={styles.floatingCard}>
-              <span>8 ingredients</span>
-              <strong>3 substitutions</strong>
-            </div>
-          </div>
         </div>
 
         <form className={styles.scanPanel} onSubmit={analyzeImage}>
@@ -265,8 +252,8 @@ export default function SnapChefApp() {
               <p className={styles.eyebrow}>Image scan</p>
               <h2>Start with a food photo</h2>
             </div>
-            <button className={styles.ghostButton} type="button" onClick={loadDemo}>
-              Preview demo
+            <button className={styles.ghostButton} type="button" onClick={loadExample}>
+              See example
             </button>
           </div>
 
@@ -351,10 +338,10 @@ export default function SnapChefApp() {
               <div
                 className={styles.resultPhoto}
                 role="img"
-                aria-label={previewUrl ? "Uploaded food preview" : "Sample food spread"}
+                aria-label={previewUrl ? "Uploaded food preview" : "Food spread"}
                 style={{ backgroundImage: `url(${resultPhoto})` }}
               >
-                <span>{result.demoMode ? "Demo scan" : "Analyzed scan"}</span>
+                <span>{result.exampleMode ? "Example result" : "Your scan"}</span>
               </div>
 
               <div className={styles.resultHeader}>
@@ -406,8 +393,8 @@ export default function SnapChefApp() {
             <div className={styles.emptyState}>
               <div className={styles.emptyPhoto} aria-hidden="true">
                 <div>
-                  <span>Sample scan</span>
-                  <strong>Fresh pasta, tacos, bowls, pancakes</strong>
+                  <span>What you get</span>
+                  <strong>Recipes from the food already in front of you</strong>
                 </div>
               </div>
 
@@ -429,8 +416,8 @@ export default function SnapChefApp() {
                 ))}
               </div>
 
-              <button className={styles.demoButton} type="button" onClick={loadDemo}>
-                Try the sample result
+              <button className={styles.exampleButton} type="button" onClick={loadExample}>
+                See an example result
               </button>
             </div>
           )}

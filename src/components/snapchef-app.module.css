@@ -82,8 +82,7 @@
 
 .heroGrid {
   display: grid;
-  grid-template-columns: minmax(0, 0.95fr) minmax(250px, 0.8fr);
-  gap: 18px;
+  grid-template-columns: 1fr;
   align-items: center;
 }
 
@@ -139,67 +138,6 @@
   font-weight: 800;
 }
 
-.foodShowcase {
-  position: relative;
-  min-height: 300px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 8px;
-  overflow: hidden;
-  background:
-    linear-gradient(180deg, rgba(12, 28, 22, 0.05), rgba(12, 28, 22, 0.28)),
-    url("/snapchef-food-board.png");
-  background-size: cover;
-  background-position: center;
-  box-shadow: 0 28px 70px rgba(0, 0, 0, 0.28);
-}
-
-.foodShowcase::after {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, transparent 30%, rgba(16, 36, 29, 0.48));
-  content: "";
-}
-
-.scanCard,
-.floatingCard {
-  position: absolute;
-  z-index: 1;
-  display: grid;
-  gap: 5px;
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  border-radius: 8px;
-  background: rgba(16, 32, 27, 0.78);
-  box-shadow: 0 20px 42px rgba(0, 0, 0, 0.26);
-  backdrop-filter: blur(18px);
-}
-
-.scanCard {
-  left: 18px;
-  right: 18px;
-  bottom: 18px;
-  padding: 18px;
-}
-
-.floatingCard {
-  top: 18px;
-  right: 18px;
-  padding: 14px 16px;
-}
-
-.scanCard span,
-.floatingCard span,
-.scanCard small {
-  color: #cfe4d6;
-  font-size: 0.82rem;
-  font-weight: 800;
-}
-
-.scanCard strong,
-.floatingCard strong {
-  color: #ffffff;
-  font-size: 1rem;
-}
-
 .scanPanel {
   display: grid;
   gap: 12px;
@@ -224,7 +162,7 @@
 }
 
 .ghostButton,
-.demoButton {
+.exampleButton {
   border: 1px solid rgba(255, 255, 255, 0.22);
   color: #f8fff7;
   background: rgba(255, 255, 255, 0.1);
@@ -245,10 +183,8 @@
   border: 1px dashed rgba(255, 255, 255, 0.52);
   border-radius: 8px;
   background:
-    linear-gradient(180deg, rgba(18, 45, 36, 0.78), rgba(18, 45, 36, 0.82)),
-    url("/snapchef-food-board.png");
-  background-size: cover;
-  background-position: center;
+    radial-gradient(circle at 25% 20%, rgba(248, 195, 91, 0.18), transparent 16rem),
+    linear-gradient(145deg, rgba(18, 45, 36, 0.88), rgba(23, 34, 30, 0.94));
   cursor: pointer;
   overflow: hidden;
   transition: border-color 180ms ease, background 180ms ease, transform 180ms ease;
@@ -351,7 +287,7 @@
 .primaryButton:focus-visible,
 .secondaryButton:focus-visible,
 .ghostButton:focus-visible,
-.demoButton:focus-visible,
+.exampleButton:focus-visible,
 .presetRow button:focus-visible,
 .tabs button:focus-visible,
 .videoList a:focus-visible {
@@ -388,7 +324,7 @@
 
 .primaryButton,
 .secondaryButton,
-.demoButton {
+.exampleButton {
   min-height: 50px;
   border-radius: 8px;
   padding: 0 18px;
@@ -720,7 +656,7 @@
   color: #15803d;
 }
 
-.demoButton {
+.exampleButton {
   width: fit-content;
   border-color: #f05d4f;
   color: #ffffff;
@@ -751,10 +687,6 @@
 @media (max-width: 820px) {
   .heroGrid {
     grid-template-columns: 1fr;
-  }
-
-  .foodShowcase {
-    min-height: 280px;
   }
 
   .metricRow,
@@ -807,17 +739,7 @@
     grid-template-columns: 1fr;
   }
 
-  .floatingCard {
-    display: none;
-  }
-
-  .scanCard {
-    left: 12px;
-    right: 12px;
-    bottom: 12px;
-  }
-
-  .demoButton {
+  .exampleButton {
     width: 100%;
   }
 }

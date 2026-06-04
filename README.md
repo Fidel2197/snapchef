@@ -6,9 +6,9 @@ SnapChef is a food image assistant that turns a food photo or screenshot into a 
 
 - Upload a JPG, PNG, or WebP food image
 - Add servings and optional preferences
-- Analyze the image through a server-side OpenAI route
+- Analyze the image through a server-side Gemini or OpenAI route
 - Show recipe, ingredients, and video-search views
-- Fall back to demo mode when `OPENAI_API_KEY` is not configured
+- Show an example response when no AI provider key is configured
 
 ## Tech Stack
 
@@ -58,7 +58,7 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## AI Provider Notes
 
-The app can run in demo mode with no key, but real image analysis requires an API key from one provider.
+The app can show an example response with no key, but real image analysis requires an API key from one provider.
 
 Recommended MVP provider:
 

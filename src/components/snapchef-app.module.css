@@ -20,6 +20,27 @@
   gap: 18px;
 }
 
+.activeShell .workspace {
+  position: sticky;
+  top: 0;
+  align-self: start;
+  align-content: start;
+  max-height: 100vh;
+  overflow-y: auto;
+}
+
+.activeShell .resultPanel {
+  align-items: start;
+}
+
+.activeShell .scanPanel {
+  box-shadow: none;
+}
+
+.activeShell .dropzone {
+  min-height: 160px;
+}
+
 .resultPanel {
   display: grid;
   align-items: center;
@@ -183,6 +204,136 @@
   color: #dce9df;
   font-size: 0.82rem;
   line-height: 1.45;
+}
+
+.scanSummary,
+.scanProgress {
+  display: grid;
+  gap: 14px;
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.scanSummaryPhoto {
+  min-height: 190px;
+  display: flex;
+  align-items: flex-end;
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 8px;
+  background-size: cover;
+  background-position: center;
+  overflow: hidden;
+}
+
+.scanSummaryPhoto span {
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 12px;
+  border-radius: 8px;
+  color: #ffffff;
+  background: rgba(16, 32, 27, 0.78);
+  font-size: 0.84rem;
+  font-weight: 900;
+}
+
+.scanSummaryBody,
+.scanProgressBody {
+  display: grid;
+  gap: 12px;
+}
+
+.scanSummaryBody h2,
+.scanProgressBody h2 {
+  color: #ffffff;
+  font-size: 1.65rem;
+  line-height: 1.08;
+}
+
+.scanSummaryBody p,
+.scanProgressBody p {
+  color: #dce9df;
+  line-height: 1.55;
+}
+
+.scanSummaryStats,
+.progressSteps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.scanSummaryStats span,
+.progressSteps span {
+  min-height: 70px;
+  display: grid;
+  gap: 6px;
+  align-content: center;
+  padding: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  background: rgba(8, 22, 17, 0.28);
+}
+
+.scanSummaryStats small {
+  color: #9ee6a8;
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.scanSummaryStats strong {
+  color: #ffffff;
+  font-size: 0.92rem;
+  line-height: 1.25;
+  text-transform: capitalize;
+}
+
+.scanSummaryNote {
+  padding: 12px;
+  border-radius: 8px;
+  background: rgba(158, 230, 168, 0.12);
+}
+
+.progressMeter {
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  overflow: hidden;
+}
+
+.progressMeter span {
+  width: 62%;
+  height: 100%;
+  display: block;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #9ee6a8, #f8c35b, #ff7a59);
+  animation: scanPulse 1.3s ease-in-out infinite alternate;
+}
+
+.progressSteps {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.progressSteps span {
+  min-height: 48px;
+  color: #f8fff7;
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
+@keyframes scanPulse {
+  from {
+    transform: translateX(-24%);
+  }
+
+  to {
+    transform: translateX(76%);
+  }
 }
 
 .scanPanel {
@@ -934,6 +1085,12 @@
     padding: 28px;
   }
 
+  .activeShell .workspace {
+    position: static;
+    max-height: none;
+    overflow: visible;
+  }
+
   .brandBar h1 {
     font-size: 3.4rem;
   }
@@ -998,6 +1155,8 @@
   .metricRow,
   .storyGrid,
   .presetRow,
+  .scanSummaryStats,
+  .progressSteps,
   .insightStrip,
   .confidenceLevels,
   .budgetSummary,

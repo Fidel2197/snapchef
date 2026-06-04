@@ -250,6 +250,7 @@ export default function SnapChefApp() {
   }, [customPreferences, selectedPresets]);
 
   const resultPhoto = previewUrl || "/snapchef-food-board.png";
+  const isScanActive = isAnalyzing || Boolean(result);
 
   function togglePreset(value: string) {
     setSelectedPresets((current) =>
@@ -351,7 +352,7 @@ export default function SnapChefApp() {
   }
 
   return (
-    <main className={styles.shell}>
+    <main className={`${styles.shell} ${isScanActive ? styles.activeShell : ""}`}>
       <section className={styles.workspace}>
         <header className={styles.appHeader}>
           <div className={styles.logoLockup}>
@@ -361,7 +362,24 @@ export default function SnapChefApp() {
           <span className={styles.statusBadge}>{confidenceText}</span>
         </header>
 
-        <div className={styles.heroGrid}>
+        {isAnalyzing ? (
+          <ScanProgress
+            activePreferenceSummary={activePreferenceSummary}
+            resultPhoto={resultPhoto}
+          />
+        ) : null}
+
+        {result ? (
+          <ScanSummary
+            activePreferenceSummary={activePreferenceSummary}
+            onReset={resetScan}
+            result={result}
+            resultPhoto={resultPhoto}
+          />
+        ) : null}
+
+        {!isScanActive ? (
+          <div className={styles.heroGrid}>
           <div className={styles.brandBar}>
             <p className={styles.eyebrow}>Food photo to recipe</p>
             <h1>Turn a food photo into dinner plans.</h1>
@@ -392,12 +410,13 @@ export default function SnapChefApp() {
             </div>
           </div>
         </div>
+        ) : null}
 
         <form className={styles.scanPanel} onSubmit={analyzeImage}>
           <div className={styles.panelHeader}>
             <div>
               <p className={styles.eyebrow}>Image scan</p>
-              <h2>Start with a food photo</h2>
+              <h2>{isScanActive ? "Refine or start over" : "Start with a food photo"}</h2>
             </div>
             <button className={styles.ghostButton} type="button" onClick={loadExample}>
               See example
@@ -634,6 +653,97 @@ function RecipeView({ result }: { result: SnapChefResult }) {
         ))}
       </ol>
     </div>
+  );
+}
+
+function ScanProgress({
+  activePreferenceSummary,
+  resultPhoto,
+}: {
+  activePreferenceSummary: string;
+  resultPhoto: string;
+}) {
+  return (
+    <section className={styles.scanProgress}>
+      <div
+        className={styles.scanSummaryPhoto}
+        role="img"
+        aria-label="Selected food being analyzed"
+        style={{ backgroundImage: `url(${resultPhoto})` }}
+      >
+        <span>Analyzing</span>
+      </div>
+      <div className={styles.scanProgressBody}>
+        <p className={styles.eyebrow}>Current scan</p>
+        <h2>Building your recipe plan.</h2>
+        <div className={styles.progressMeter} aria-hidden="true">
+          <span />
+        </div>
+        <div className={styles.progressSteps}>
+          <span>Dish match</span>
+          <span>Ingredient list</span>
+          <span>Budget estimate</span>
+          <span>Cooking steps</span>
+        </div>
+        {activePreferenceSummary ? (
+          <p className={styles.scanSummaryNote}>{activePreferenceSummary}</p>
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
+function ScanSummary({
+  activePreferenceSummary,
+  onReset,
+  result,
+  resultPhoto,
+}: {
+  activePreferenceSummary: string;
+  onReset: () => void;
+  result: SnapChefResult;
+  resultPhoto: string;
+}) {
+  return (
+    <section className={styles.scanSummary}>
+      <div
+        className={styles.scanSummaryPhoto}
+        role="img"
+        aria-label="Current food scan"
+        style={{ backgroundImage: `url(${resultPhoto})` }}
+      >
+        <span>Current scan</span>
+      </div>
+      <div className={styles.scanSummaryBody}>
+        <div>
+          <p className={styles.eyebrow}>Result snapshot</p>
+          <h2>{result.dishName}</h2>
+          <p>{result.summary}</p>
+        </div>
+        <div className={styles.scanSummaryStats}>
+          <span>
+            <small>Confidence</small>
+            <strong>{result.confidence}</strong>
+          </span>
+          <span>
+            <small>Time</small>
+            <strong>{result.recipe.time}</strong>
+          </span>
+          <span>
+            <small>Cost</small>
+            <strong>{result.shoppingPlan.estimatedPerServing}</strong>
+          </span>
+        </div>
+        {activePreferenceSummary || result.appliedPreferences?.length ? (
+          <p className={styles.scanSummaryNote}>
+            {activePreferenceSummary || result.appliedPreferences.join(", ")}
+          </p>
+        ) : null}
+        <button className={styles.secondaryButton} type="button" onClick={onReset}>
+          New scan
+        </button>
+      </div>
+    </section>
   );
 }
 

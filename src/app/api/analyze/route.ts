@@ -82,6 +82,79 @@ const sampleResult: SnapChefResult = {
   notice: "Add GEMINI_API_KEY or OPENAI_API_KEY to .env.local to use real image analysis.",
 };
 
+const snapChefSchema = {
+  type: "object",
+  properties: {
+    dishName: { type: "string", description: "The most likely dish name." },
+    confidence: {
+      type: "string",
+      enum: ["high", "medium", "low"],
+      description: "How confident the model is in the dish identification.",
+    },
+    summary: { type: "string", description: "One short paragraph summarizing the dish." },
+    ingredients: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          name: { type: "string" },
+          amount: { type: "string" },
+          note: { type: "string" },
+        },
+        required: ["name", "amount"],
+      },
+    },
+    recipe: {
+      type: "object",
+      properties: {
+        title: { type: "string" },
+        time: { type: "string" },
+        difficulty: { type: "string", enum: ["Easy", "Medium", "Advanced"] },
+        servings: { type: "string" },
+        steps: {
+          type: "array",
+          items: { type: "string" },
+        },
+      },
+      required: ["title", "time", "difficulty", "servings", "steps"],
+    },
+    substitutions: {
+      type: "array",
+      items: { type: "string" },
+    },
+    nutritionNotes: {
+      type: "array",
+      items: { type: "string" },
+    },
+    safetyNotes: {
+      type: "array",
+      items: { type: "string" },
+    },
+    searchLinks: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          label: { type: "string" },
+          url: { type: "string" },
+        },
+        required: ["label", "url"],
+      },
+    },
+  },
+  required: [
+    "dishName",
+    "confidence",
+    "summary",
+    "ingredients",
+    "recipe",
+    "substitutions",
+    "nutritionNotes",
+    "safetyNotes",
+    "searchLinks",
+  ],
+};
+
 export async function POST(request: Request) {
   const formData = await request.formData();
   const image = formData.get("image");
@@ -214,7 +287,12 @@ async function analyzeWithGemini(
         ],
         generationConfig: {
           temperature: 0.3,
-          maxOutputTokens: 1800,
+          maxOutputTokens: 3000,
+          responseMimeType: "application/json",
+          responseJsonSchema: snapChefSchema,
+          thinkingConfig: {
+            thinkingBudget: 0,
+          },
         },
       }),
     },
@@ -328,10 +406,16 @@ function extractGeminiText(payload: unknown) {
 }
 
 function parseResult(text: string): Partial<SnapChefResult> | null {
+  const cleaned = text
+    .trim()
+    .replace(/^```(?:json)?\s*/i, "")
+    .replace(/\s*```$/i, "")
+    .trim();
+
   try {
-    return JSON.parse(text) as Partial<SnapChefResult>;
+    return JSON.parse(cleaned) as Partial<SnapChefResult>;
   } catch {
-    const match = text.match(/\{[\s\S]*\}/);
+    const match = cleaned.match(/\{[\s\S]*\}/);
     if (!match) {
       return null;
     }

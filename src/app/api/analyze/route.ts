@@ -79,7 +79,7 @@ const sampleResult: SnapChefResult = {
     },
   ],
   demoMode: true,
-  notice: "Add OPENAI_API_KEY to .env.local to use real image analysis.",
+  notice: "Add GEMINI_API_KEY or OPENAI_API_KEY to .env.local to use real image analysis.",
 };
 
 export async function POST(request: Request) {
@@ -100,6 +100,35 @@ export async function POST(request: Request) {
     return Response.json({ error: "Please upload an image under 8 MB." }, { status: 400 });
   }
 
+  const provider = (process.env.AI_PROVIDER || "gemini").toLowerCase();
+
+  if (provider === "gemini" && process.env.GEMINI_API_KEY) {
+    return analyzeWithGemini(image, { preferences, servings });
+  }
+
+  if (provider === "openai" && process.env.OPENAI_API_KEY) {
+    return analyzeWithOpenAI(image, { preferences, servings });
+  }
+
+  if (process.env.GEMINI_API_KEY) {
+    return analyzeWithGemini(image, { preferences, servings });
+  }
+
+  if (process.env.OPENAI_API_KEY) {
+    return analyzeWithOpenAI(image, { preferences, servings });
+  }
+
+  return Response.json({
+    ...sampleResult,
+    notice:
+      "Demo result shown because no Gemini or OpenAI API key is configured. Add GEMINI_API_KEY for the free-tier path.",
+  });
+}
+
+async function analyzeWithOpenAI(
+  image: File,
+  { preferences, servings }: { preferences: string; servings: string },
+) {
   if (!process.env.OPENAI_API_KEY) {
     return Response.json(sampleResult);
   }
@@ -151,9 +180,76 @@ export async function POST(request: Request) {
   return Response.json(normalizeResult(parsed));
 }
 
+async function analyzeWithGemini(
+  image: File,
+  { preferences, servings }: { preferences: string; servings: string },
+) {
+  if (!process.env.GEMINI_API_KEY) {
+    return Response.json(sampleResult);
+  }
+
+  const model = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+  const prompt = buildPrompt({ preferences, servings });
+  const base64 = await fileToBase64(image);
+  const geminiResponse = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${process.env.GEMINI_API_KEY}`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [
+              { text: prompt },
+              {
+                inline_data: {
+                  mime_type: image.type,
+                  data: base64,
+                },
+              },
+            ],
+          },
+        ],
+        generationConfig: {
+          temperature: 0.3,
+          maxOutputTokens: 1800,
+        },
+      }),
+    },
+  );
+
+  const payload = await geminiResponse.json();
+
+  if (!geminiResponse.ok) {
+    const message =
+      payload?.error?.message ||
+      "Gemini could not analyze the image. Check your API key, quota, and model access.";
+    return Response.json({ error: message }, { status: geminiResponse.status });
+  }
+
+  const text = extractGeminiText(payload);
+  const parsed = parseResult(text);
+
+  if (!parsed) {
+    return Response.json(
+      { error: "The Gemini response was not valid recipe JSON. Try another image." },
+      { status: 502 },
+    );
+  }
+
+  return Response.json(normalizeResult(parsed));
+}
+
 async function fileToDataUrl(file: File) {
   const buffer = Buffer.from(await file.arrayBuffer());
   return `data:${file.type};base64,${buffer.toString("base64")}`;
+}
+
+async function fileToBase64(file: File) {
+  const buffer = Buffer.from(await file.arrayBuffer());
+  return buffer.toString("base64");
 }
 
 function buildPrompt({ preferences, servings }: { preferences: string; servings: string }) {
@@ -210,6 +306,23 @@ function extractOutputText(payload: unknown) {
       }
       return "";
     })
+    .join("")
+    .trim();
+}
+
+function extractGeminiText(payload: unknown) {
+  if (!isRecord(payload) || !Array.isArray(payload.candidates)) {
+    return "";
+  }
+
+  return payload.candidates
+    .flatMap((candidate) => {
+      if (!isRecord(candidate) || !isRecord(candidate.content)) {
+        return [];
+      }
+      return Array.isArray(candidate.content.parts) ? candidate.content.parts : [];
+    })
+    .map((part) => (isRecord(part) && typeof part.text === "string" ? part.text : ""))
     .join("")
     .trim();
 }

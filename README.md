@@ -15,7 +15,7 @@ SnapChef is a food image assistant that turns a food photo or screenshot into a 
 - Next.js App Router
 - React and TypeScript
 - CSS Modules
-- OpenAI Responses API through `src/app/api/analyze/route.ts`
+- Gemini API or OpenAI Responses API through `src/app/api/analyze/route.ts`
 - Supabase schema prepared for saved scan history in `supabase/schema.sql`
 
 ## Local Setup
@@ -32,9 +32,18 @@ Create a local environment file:
 copy .env.example .env.local
 ```
 
-Add your OpenAI API key:
+For the no-billing-first path, add a Gemini API key:
 
 ```env
+AI_PROVIDER=gemini
+GEMINI_API_KEY=your_gemini_api_key_here
+GEMINI_MODEL=gemini-2.5-flash
+```
+
+OpenAI is optional if you later add API credits:
+
+```env
+AI_PROVIDER=openai
 OPENAI_API_KEY=your_api_key_here
 OPENAI_MODEL=gpt-5.5
 ```
@@ -47,15 +56,21 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
-## OpenAI Account Note
+## AI Provider Notes
 
-The app can run in demo mode with no key, but real image analysis requires:
+The app can run in demo mode with no key, but real image analysis requires an API key from one provider.
 
-- an OpenAI API key
-- available API credits
-- access to the configured model
+Recommended MVP provider:
 
-If the OpenAI dashboard shows `$0.00` credit remaining, the app UI will still run, but real analysis calls will fail until credits are added.
+- Gemini API with `AI_PROVIDER=gemini`
+- Google offers a free tier for testing, but it has quota/rate limits
+- Use `GEMINI_API_KEY` and `GEMINI_MODEL=gemini-2.5-flash`
+
+Optional provider:
+
+- OpenAI with `AI_PROVIDER=openai`
+- OpenAI image analysis requires an OpenAI API key and available API credits
+- If the OpenAI dashboard shows `$0.00` credit remaining, the app UI will still run, but real OpenAI analysis calls will fail until credits are added
 
 ## Supabase Next Phase
 

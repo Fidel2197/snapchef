@@ -44,6 +44,20 @@ type ApiError = {
 
 type ResultTab = "recipe" | "ingredients" | "videos";
 
+const preferencePresets = [
+  { label: "College budget", value: "college budget, quick, cheap ingredients" },
+  { label: "High protein", value: "high protein, filling, meal prep friendly" },
+  { label: "Vegetarian", value: "vegetarian, no meat, beginner friendly" },
+  { label: "Spicy", value: "spicy, bold flavor, easy swaps" },
+];
+
+const previewTiles = [
+  { label: "Dish", value: "Tomato Basil Pasta" },
+  { label: "Time", value: "25 minutes" },
+  { label: "Ingredients", value: "7 likely items" },
+  { label: "Videos", value: "Search links ready" },
+];
+
 const sampleResult: SnapChefResult = {
   dishName: "Tomato Basil Pasta",
   confidence: "medium",
@@ -91,7 +105,7 @@ const sampleResult: SnapChefResult = {
     },
   ],
   demoMode: true,
-  notice: "Demo result shown without calling the OpenAI API.",
+  notice: "Demo result shown without calling Gemini.",
 };
 
 export default function SnapChefApp() {
@@ -112,6 +126,8 @@ export default function SnapChefApp() {
 
     return `${result.confidence[0].toUpperCase()}${result.confidence.slice(1)} confidence`;
   }, [result]);
+
+  const resultPhoto = previewUrl || "/snapchef-food-board.png";
 
   function chooseFile(selectedFile?: File) {
     if (!selectedFile) {
@@ -207,25 +223,68 @@ export default function SnapChefApp() {
   return (
     <main className={styles.shell}>
       <section className={styles.workspace}>
-        <div className={styles.brandBar}>
-          <div>
-            <p className={styles.eyebrow}>SnapChef</p>
-            <h1>Turn a food photo into a recipe plan.</h1>
+        <header className={styles.appHeader}>
+          <div className={styles.logoLockup}>
+            <span className={styles.logoMark}>SC</span>
+            <span>SnapChef</span>
           </div>
-          <div className={styles.statusBadge}>{confidenceText}</div>
+          <span className={styles.statusBadge}>{confidenceText}</span>
+        </header>
+
+        <div className={styles.heroGrid}>
+          <div className={styles.brandBar}>
+            <p className={styles.eyebrow}>AI recipe camera</p>
+            <h1>Turn a food photo into dinner plans.</h1>
+            <p className={styles.subtitle}>
+              Upload a plate, get a likely dish, ingredient list, recipe steps, swaps, and cooking
+              video searches.
+            </p>
+            <div className={styles.metricRow} aria-label="SnapChef capabilities">
+              <span>Dish ID</span>
+              <span>Ingredients</span>
+              <span>Recipe steps</span>
+            </div>
+          </div>
+
+          <div className={styles.foodShowcase} aria-hidden="true">
+            <div className={styles.scanCard}>
+              <span>Likely dish</span>
+              <strong>Tomato Basil Pasta</strong>
+              <small>25 min plan ready</small>
+            </div>
+            <div className={styles.floatingCard}>
+              <span>8 ingredients</span>
+              <strong>3 substitutions</strong>
+            </div>
+          </div>
         </div>
 
         <form className={styles.scanPanel} onSubmit={analyzeImage}>
+          <div className={styles.panelHeader}>
+            <div>
+              <p className={styles.eyebrow}>Image scan</p>
+              <h2>Start with a food photo</h2>
+            </div>
+            <button className={styles.ghostButton} type="button" onClick={loadDemo}>
+              Preview demo
+            </button>
+          </div>
+
           <label
-            className={styles.dropzone}
+            className={`${styles.dropzone} ${previewUrl ? styles.hasPreview : ""}`}
             onDragOver={(event) => event.preventDefault()}
             onDrop={handleDrop}
           >
             {previewUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img className={styles.previewImage} src={previewUrl} alt="Selected food" />
+              <span
+                className={styles.previewImage}
+                role="img"
+                aria-label="Selected food"
+                style={{ backgroundImage: `url(${previewUrl})` }}
+              />
             ) : (
               <span className={styles.dropzoneContent}>
+                <span className={styles.dropIcon}>+</span>
                 <span className={styles.dropzoneTitle}>Upload food image</span>
                 <span className={styles.dropzoneMeta}>JPG, PNG, or WebP under 8 MB</span>
               </span>
@@ -259,14 +318,24 @@ export default function SnapChefApp() {
             </label>
           </div>
 
+          <div className={styles.presetRow} aria-label="Preference presets">
+            {preferencePresets.map((preset) => (
+              <button
+                className={preferences === preset.value ? styles.selectedPreset : ""}
+                key={preset.label}
+                onClick={() => setPreferences(preset.value)}
+                type="button"
+              >
+                {preset.label}
+              </button>
+            ))}
+          </div>
+
           <div className={styles.actionRow}>
             <button className={styles.primaryButton} disabled={isAnalyzing} type="submit">
               {isAnalyzing ? "Analyzing..." : "Analyze image"}
             </button>
-            <button className={styles.secondaryButton} type="button" onClick={loadDemo}>
-              Try demo
-            </button>
-            <button className={styles.iconButton} type="button" onClick={resetScan} aria-label="Reset scan">
+            <button className={styles.secondaryButton} type="button" onClick={resetScan}>
               Reset
             </button>
           </div>
@@ -276,59 +345,96 @@ export default function SnapChefApp() {
       </section>
 
       <section className={styles.resultPanel} aria-live="polite">
-        {result ? (
-          <>
-            <div className={styles.resultHeader}>
-              <div>
-                <p className={styles.eyebrow}>Detected dish</p>
-                <h2>{result.dishName}</h2>
+        <div className={styles.resultCanvas}>
+          {result ? (
+            <>
+              <div
+                className={styles.resultPhoto}
+                role="img"
+                aria-label={previewUrl ? "Uploaded food preview" : "Sample food spread"}
+                style={{ backgroundImage: `url(${resultPhoto})` }}
+              >
+                <span>{result.demoMode ? "Demo scan" : "Analyzed scan"}</span>
               </div>
-              <span className={styles.confidencePill}>{result.confidence}</span>
-            </div>
-            <p className={styles.summary}>{result.summary}</p>
 
-            {result.notice ? <p className={styles.notice}>{result.notice}</p> : null}
+              <div className={styles.resultHeader}>
+                <div>
+                  <p className={styles.eyebrow}>Detected dish</p>
+                  <h2>{result.dishName}</h2>
+                </div>
+                <span className={styles.confidencePill}>{result.confidence}</span>
+              </div>
+              <p className={styles.summary}>{result.summary}</p>
 
-            <div className={styles.tabs} role="tablist" aria-label="SnapChef result sections">
-              <button
-                className={activeTab === "recipe" ? styles.activeTab : ""}
-                onClick={() => setActiveTab("recipe")}
-                type="button"
-              >
-                Recipe
-              </button>
-              <button
-                className={activeTab === "ingredients" ? styles.activeTab : ""}
-                onClick={() => setActiveTab("ingredients")}
-                type="button"
-              >
-                Ingredients
-              </button>
-              <button
-                className={activeTab === "videos" ? styles.activeTab : ""}
-                onClick={() => setActiveTab("videos")}
-                type="button"
-              >
-                Videos
+              {result.notice ? <p className={styles.notice}>{result.notice}</p> : null}
+
+              <div className={styles.insightStrip}>
+                <span>{result.ingredients.length} ingredients</span>
+                <span>{result.recipe.time}</span>
+                <span>{result.searchLinks.length} video searches</span>
+              </div>
+
+              <div className={styles.tabs} role="tablist" aria-label="SnapChef result sections">
+                <button
+                  className={activeTab === "recipe" ? styles.activeTab : ""}
+                  onClick={() => setActiveTab("recipe")}
+                  type="button"
+                >
+                  Recipe
+                </button>
+                <button
+                  className={activeTab === "ingredients" ? styles.activeTab : ""}
+                  onClick={() => setActiveTab("ingredients")}
+                  type="button"
+                >
+                  Ingredients
+                </button>
+                <button
+                  className={activeTab === "videos" ? styles.activeTab : ""}
+                  onClick={() => setActiveTab("videos")}
+                  type="button"
+                >
+                  Videos
+                </button>
+              </div>
+
+              {activeTab === "recipe" ? <RecipeView result={result} /> : null}
+              {activeTab === "ingredients" ? <IngredientsView result={result} /> : null}
+              {activeTab === "videos" ? <VideosView result={result} /> : null}
+            </>
+          ) : (
+            <div className={styles.emptyState}>
+              <div className={styles.emptyPhoto} aria-hidden="true">
+                <div>
+                  <span>Sample scan</span>
+                  <strong>Fresh pasta, tacos, bowls, pancakes</strong>
+                </div>
+              </div>
+
+              <div>
+                <p className={styles.eyebrow}>Recipe workspace</p>
+                <h2>Ready when your plate is.</h2>
+                <p className={styles.summary}>
+                  SnapChef turns a food image into a practical cooking plan with ingredients,
+                  steps, swaps, and videos.
+                </p>
+              </div>
+
+              <div className={styles.emptyGrid}>
+                {previewTiles.map((tile) => (
+                  <span key={tile.label}>
+                    <small>{tile.label}</small>
+                    <strong>{tile.value}</strong>
+                  </span>
+                ))}
+              </div>
+
+              <button className={styles.demoButton} type="button" onClick={loadDemo}>
+                Try the sample result
               </button>
             </div>
-
-            {activeTab === "recipe" ? <RecipeView result={result} /> : null}
-            {activeTab === "ingredients" ? <IngredientsView result={result} /> : null}
-            {activeTab === "videos" ? <VideosView result={result} /> : null}
-          </>
-        ) : (
-          <div className={styles.emptyState}>
-            <p className={styles.eyebrow}>Recipe workspace</p>
-            <h2>Your result will land here.</h2>
-            <div className={styles.emptyGrid}>
-              <span>Dish</span>
-              <span>Ingredients</span>
-              <span>Steps</span>
-              <span>Videos</span>
-            </div>
-          </div>
-        )}
+          )}
+        </div>
       </section>
     </main>
   );

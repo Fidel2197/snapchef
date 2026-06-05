@@ -1083,7 +1083,9 @@
 }
 
 .emptyState {
-  align-self: start;
+  min-height: calc(100vh - 48px);
+  align-self: stretch;
+  align-content: start;
 }
 
 .starterDetails {
@@ -1106,6 +1108,151 @@
 
 .starterDetails .guideGrid strong {
   color: #223129;
+}
+
+.aboutPanel,
+.workflowPanel,
+.foodIdeaPanel,
+.contactPanel {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid #dfe9dc;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 14px 38px rgba(20, 30, 26, 0.06);
+}
+
+.aboutPanel h3,
+.workflowPanel h3,
+.foodIdeaPanel h3,
+.contactPanel h3 {
+  color: #12211c;
+  font-size: 1.18rem;
+  line-height: 1.18;
+}
+
+.aboutPanel p,
+.contactPanel p,
+.workflowSteps p {
+  color: #4b5b54;
+  line-height: 1.55;
+}
+
+.aboutPanel .guideGrid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.aboutPanel .guideGrid span {
+  min-height: 124px;
+  border-color: #edf2ea;
+  background: #f8fbf5;
+}
+
+.aboutPanel .guideGrid small {
+  color: #15803d;
+}
+
+.aboutPanel .guideGrid strong {
+  color: #223129;
+}
+
+.workflowPanel {
+  background:
+    linear-gradient(135deg, rgba(21, 128, 61, 0.08), rgba(248, 195, 91, 0.12)),
+    #ffffff;
+}
+
+.workflowSteps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.workflowSteps span {
+  min-height: 148px;
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  padding: 14px;
+  border: 1px solid rgba(21, 128, 61, 0.14);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.workflowSteps small {
+  width: 38px;
+  height: 34px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 8px;
+  color: #ffffff;
+  background: #15803d;
+  font-size: 0.76rem;
+  font-weight: 900;
+}
+
+.workflowSteps strong {
+  color: #12211c;
+  line-height: 1.25;
+}
+
+.foodIdeaPanel {
+  grid-template-columns: minmax(150px, 0.36fr) minmax(0, 1fr);
+  align-items: start;
+}
+
+.tagCloud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tagCloud span {
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid rgba(21, 128, 61, 0.18);
+  border-radius: 8px;
+  padding: 0 12px;
+  color: #14532d;
+  background: #e8f8dc;
+  font-size: 0.86rem;
+  font-weight: 900;
+}
+
+.contactPanel {
+  grid-template-columns: minmax(0, 1fr) minmax(190px, auto);
+  align-items: center;
+  border-color: rgba(240, 93, 79, 0.24);
+  background:
+    linear-gradient(135deg, rgba(240, 93, 79, 0.08), rgba(255, 255, 255, 0)),
+    #ffffff;
+}
+
+.contactLinks {
+  display: grid;
+  gap: 8px;
+}
+
+.contactLinks a {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #dfe9dc;
+  border-radius: 8px;
+  padding: 0 14px;
+  color: #12211c;
+  background: #ffffff;
+  font-size: 0.86rem;
+  font-weight: 900;
+}
+
+.contactLinks a:first-child {
+  border-color: #f05d4f;
+  color: #ffffff;
+  background: #f05d4f;
 }
 
 .emptyPhoto {
@@ -1224,8 +1371,15 @@
   .metricRow,
   .presetRow,
   .guideGrid,
-  .insightStrip {
+  .insightStrip,
+  .aboutPanel .guideGrid,
+  .workflowSteps {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .foodIdeaPanel,
+  .contactPanel {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -1270,7 +1424,9 @@
   .ingredientGrid,
   .shoppingGrid,
   .videoList,
-  .emptyGrid {
+  .emptyGrid,
+  .aboutPanel .guideGrid,
+  .workflowSteps {
     grid-template-columns: 1fr;
   }
 

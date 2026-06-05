@@ -199,21 +199,6 @@ const starterDetailCards = [
   },
 ];
 
-const aboutCards = [
-  {
-    label: "Built for",
-    value: "students, busy nights, leftovers, screenshots, and quick meal decisions.",
-  },
-  {
-    label: "Main idea",
-    value: "identify the dish, then turn it into ingredients, steps, prices, and videos.",
-  },
-  {
-    label: "Best use",
-    value: "use it as a smart starting point, then adjust seasoning, allergies, and portions.",
-  },
-];
-
 const foodIdeaTags = [
   "wraps",
   "rice bowls",
@@ -223,7 +208,6 @@ const foodIdeaTags = [
   "soups",
   "breakfast plates",
   "leftovers",
-  "snacks",
   "meal prep",
   "dorm meals",
   "budget dinners",
@@ -744,7 +728,7 @@ export default function SnapChefApp() {
                 </div>
               </div>
 
-              <div>
+              <div className={styles.starterIntro}>
                 <p className={styles.eyebrow}>Recipe workspace</p>
                 <h2>Ready when your plate is.</h2>
                 <p className={styles.summary}>
@@ -762,75 +746,72 @@ export default function SnapChefApp() {
                 ))}
               </div>
 
-              <button className={styles.exampleButton} type="button" onClick={loadExample}>
-                See an example result
-              </button>
+              <div className={styles.starterActions}>
+                <button className={styles.exampleButton} type="button" onClick={loadExample}>
+                  See an example result
+                </button>
+              </div>
 
               <div className={styles.starterDetails}>
                 <GuideGrid cards={starterDetailCards} />
               </div>
 
-              <section className={styles.aboutPanel}>
-                <div>
-                  <p className={styles.eyebrow}>About SnapChef</p>
-                  <h3>Food photos should become useful plans.</h3>
-                  <p>
-                    SnapChef is made for the moment when you have food in front of you, a screenshot
-                    from somewhere, or leftovers in the fridge, and you want a practical way to cook
-                    it without searching forever.
-                  </p>
-                </div>
-                <GuideGrid cards={aboutCards} />
-              </section>
+              <div className={styles.starterInfoGrid}>
+                <section className={styles.aboutPanel}>
+                  <div>
+                    <p className={styles.eyebrow}>About</p>
+                    <h3>Useful plans from food photos.</h3>
+                    <p>
+                      Built for students, leftovers, screenshots, busy nights, and quick meal
+                      decisions.
+                    </p>
+                  </div>
+                </section>
 
-              <section className={styles.workflowPanel}>
-                <div>
-                  <p className={styles.eyebrow}>How it works</p>
-                  <h3>From picture to plan in three steps.</h3>
-                </div>
-                <div className={styles.workflowSteps}>
-                  {starterWorkflowSteps.map((step) => (
-                    <span key={step.label}>
-                      <small>{step.label}</small>
-                      <strong>{step.title}</strong>
-                      <p>{step.detail}</p>
-                    </span>
-                  ))}
-                </div>
-              </section>
+                <section className={styles.workflowPanel}>
+                  <div>
+                    <p className={styles.eyebrow}>How it works</p>
+                    <h3>Picture, preferences, plan.</h3>
+                  </div>
+                  <div className={styles.workflowSteps}>
+                    {starterWorkflowSteps.map((step) => (
+                      <span key={step.label}>
+                        <small>{step.label}</small>
+                        <strong>{step.title}</strong>
+                      </span>
+                    ))}
+                  </div>
+                </section>
 
-              <section className={styles.foodIdeaPanel}>
-                <div>
-                  <p className={styles.eyebrow}>Food ideas</p>
-                  <h3>Good things to scan first.</h3>
-                </div>
-                <div className={styles.tagCloud} aria-label="Food ideas">
-                  {foodIdeaTags.map((tag) => (
-                    <span key={tag}>{tag}</span>
-                  ))}
-                </div>
-              </section>
+                <section className={styles.foodIdeaPanel}>
+                  <div>
+                    <p className={styles.eyebrow}>Food ideas</p>
+                    <h3>Good first scans.</h3>
+                  </div>
+                  <div className={styles.tagCloud} aria-label="Food ideas">
+                    {foodIdeaTags.map((tag) => (
+                      <span key={tag}>{tag}</span>
+                    ))}
+                  </div>
+                </section>
 
-              <section className={styles.contactPanel}>
-                <div>
-                  <p className={styles.eyebrow}>Contact</p>
-                  <h3>Feedback makes the app better.</h3>
-                  <p>
-                    If a result feels wrong, too expensive, or missing a useful feature, send a note
-                    so the next version can be sharper.
-                  </p>
-                </div>
-                <div className={styles.contactLinks}>
-                  <a href="mailto:fanyanwu@mcneese.edu">Email feedback</a>
-                  <a
-                    href="https://github.com/Fidel2197/snapchef"
-                    rel="noopener noreferrer"
-                    target="_blank"
-                  >
-                    GitHub project
-                  </a>
-                </div>
-              </section>
+                <section className={styles.contactPanel}>
+                  <div>
+                    <p className={styles.eyebrow}>Contact</p>
+                    <h3>Feedback makes it better.</h3>
+                  </div>
+                  <div className={styles.contactLinks}>
+                    <a href="mailto:fanyanwu@mcneese.edu">Email feedback</a>
+                    <a
+                      href="https://github.com/Fidel2197/snapchef"
+                      rel="noopener noreferrer"
+                      target="_blank"
+                    >
+                      GitHub project
+                    </a>
+                  </div>
+                </section>
+              </div>
             </div>
           )}
         </div>

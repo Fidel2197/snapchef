@@ -1370,6 +1370,29 @@
   background: #f05d4f;
 }
 
+@media (min-width: 1181px) {
+  .resultPanel {
+    position: sticky;
+    top: 0;
+    align-self: start;
+    height: 100vh;
+    max-height: 100vh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .resultCanvas {
+    min-height: calc(100vh - 48px);
+  }
+
+  .activeShell .resultPanel {
+    position: static;
+    height: auto;
+    max-height: none;
+    overflow: visible;
+  }
+}
+
 @media (max-width: 1180px) {
   .shell {
     grid-template-columns: 1fr;

@@ -1904,17 +1904,14 @@
 
 @media (min-width: 1181px) {
   .resultPanel {
-    position: sticky;
-    top: 0;
-    align-self: start;
-    height: 100vh;
-    max-height: 100vh;
-    overflow-y: auto;
-    overscroll-behavior: contain;
+    align-self: stretch;
+    height: auto;
+    max-height: none;
+    overflow: visible;
   }
 
   .resultCanvas {
-    min-height: calc(100vh - 48px);
+    min-height: 0;
   }
 
   .activeShell .resultPanel {

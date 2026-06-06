@@ -1111,11 +1111,13 @@ export default function SnapChefApp() {
           {error ? <p className={styles.errorText}>{error}</p> : null}
         </form>
 
-        <SidebarGuide
-          activePreferenceSummary={activePreferenceSummary}
-          isAnalyzing={isAnalyzing}
-          result={result}
-        />
+        {isScanActive ? (
+          <SidebarGuide
+            activePreferenceSummary={activePreferenceSummary}
+            isAnalyzing={isAnalyzing}
+            result={result}
+          />
+        ) : null}
       </section>
 
       <section className={styles.resultPanel} aria-live="polite">

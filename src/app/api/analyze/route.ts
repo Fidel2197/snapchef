@@ -28,6 +28,20 @@ type SearchLink = {
   url: string;
 };
 
+type NutritionEstimate = {
+  calories: string;
+  protein: string;
+  carbs: string;
+  fat: string;
+  note: string;
+};
+
+type RecipeVariant = {
+  title: string;
+  description: string;
+  adjustment: string;
+};
+
 type SnapChefResult = {
   dishName: string;
   confidence: "high" | "medium" | "low";
@@ -45,6 +59,8 @@ type SnapChefResult = {
   safetyNotes: string[];
   searchLinks: SearchLink[];
   shoppingPlan: ShoppingPlan;
+  nutritionEstimate: NutritionEstimate;
+  recipeVariants: RecipeVariant[];
   appliedPreferences: string[];
   exampleMode?: boolean;
   notice?: string;
@@ -134,6 +150,30 @@ const exampleResult: SnapChefResult = {
       "Skip specialty toppings if the goal is the cheapest version.",
     ],
   },
+  nutritionEstimate: {
+    calories: "480 calories",
+    protein: "16g protein",
+    carbs: "68g carbs",
+    fat: "14g fat",
+    note: "Estimated per serving. Actual nutrition changes with portions, oil, sauces, and added protein.",
+  },
+  recipeVariants: [
+    {
+      title: "High-protein version",
+      description: "Add chicken, tofu, edamame, or extra egg.",
+      adjustment: "Cook the protein first, then fold it into the rice at the end.",
+    },
+    {
+      title: "Cheaper version",
+      description: "Use frozen vegetables and store-brand rice.",
+      adjustment: "Keep seasonings simple with soy sauce, garlic, and green onion.",
+    },
+    {
+      title: "Spicy version",
+      description: "Add chili oil, sriracha, or crushed red pepper.",
+      adjustment: "Start with a small amount and add more after tasting.",
+    },
+  ],
   appliedPreferences: ["college budget", "quick meal"],
   searchLinks: [
     {
@@ -235,6 +275,29 @@ const snapChefSchema = {
       },
       required: ["estimatedTotal", "estimatedPerServing", "priceNote", "items", "savingTips"],
     },
+    nutritionEstimate: {
+      type: "object",
+      properties: {
+        calories: { type: "string" },
+        protein: { type: "string" },
+        carbs: { type: "string" },
+        fat: { type: "string" },
+        note: { type: "string" },
+      },
+      required: ["calories", "protein", "carbs", "fat", "note"],
+    },
+    recipeVariants: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          title: { type: "string" },
+          description: { type: "string" },
+          adjustment: { type: "string" },
+        },
+        required: ["title", "description", "adjustment"],
+      },
+    },
     appliedPreferences: {
       type: "array",
       items: { type: "string" },
@@ -251,6 +314,8 @@ const snapChefSchema = {
     "safetyNotes",
     "searchLinks",
     "shoppingPlan",
+    "nutritionEstimate",
+    "recipeVariants",
     "appliedPreferences",
   ],
 };
@@ -466,6 +531,20 @@ JSON shape:
     ],
     "savingTips": ["string"]
   },
+  "nutritionEstimate": {
+    "calories": "string",
+    "protein": "string",
+    "carbs": "string",
+    "fat": "string",
+    "note": "string"
+  },
+  "recipeVariants": [
+    {
+      "title": "High-protein version | Cheaper version | Spicy version | Vegetarian version | Creamy version",
+      "description": "string",
+      "adjustment": "string"
+    }
+  ],
   "appliedPreferences": ["string"]
 }
 
@@ -473,9 +552,11 @@ Use ${servings || "2"} servings.
 Preferences: ${preferences || "none"}.
 Preferences should guide the recipe plan, substitutions, shopping estimates, nutrition angle, cooking method, and search links. They should not override what is visible in the photo. For example, if the user asks for vegetarian but meat is visible, identify the image honestly and suggest vegetarian swaps.
 For shoppingPlan, include rough US grocery price ranges, not exact or live prices. Include where to find each item using store sections or common budget-friendly options such as produce, frozen foods, canned goods, pantry aisle, dairy, Walmart, Aldi, Kroger, or a campus pantry when helpful.
+For nutritionEstimate, return rough estimated per-serving values only. Do not imply medical precision.
+For recipeVariants, include 3-5 useful alternate ways to make the same likely dish, such as high-protein, cheaper, spicy, vegetarian, dorm-friendly, microwave, air-fryer, creamy, or faster versions when relevant.
 If the exact dish is uncertain, make the best likely guess and set confidence to low or medium.
 Search links must be YouTube search URLs, not individual video URLs.
-Do not claim exact calories or real-time grocery prices. Mention allergy or food-safety uncertainty when useful.`;
+Do not claim exact calories or real-time grocery prices. Include clear allergy uncertainty when useful: hidden ingredients may not be visible and labels should be checked.`;
 }
 
 function extractOutputText(payload: unknown) {
@@ -580,6 +661,8 @@ function normalizeResult(
     searchLinks:
       result.searchLinks?.length ? normalizeLinks(result.searchLinks) : defaultLinks(dishName, searchTerm),
     shoppingPlan: normalizeShoppingPlan(result.shoppingPlan, ingredients),
+    nutritionEstimate: normalizeNutritionEstimate(result.nutritionEstimate),
+    recipeVariants: normalizeRecipeVariants(result.recipeVariants, dishName),
     appliedPreferences: normalizeAppliedPreferences(
       result.appliedPreferences,
       context.preferences || "",
@@ -654,6 +737,54 @@ function normalizeShoppingPlan(
       "Use pantry staples you already have before buying every listed item.",
     ]),
   };
+}
+
+function normalizeNutritionEstimate(value?: Partial<NutritionEstimate>): NutritionEstimate {
+  return {
+    calories: fallbackString(value?.calories, "estimate varies"),
+    protein: fallbackString(value?.protein, "protein varies"),
+    carbs: fallbackString(value?.carbs, "carbs vary"),
+    fat: fallbackString(value?.fat, "fat varies"),
+    note: fallbackString(
+      value?.note,
+      "Estimated per serving. Actual nutrition changes with portions, brands, cooking oil, sauces, and substitutions.",
+    ),
+  };
+}
+
+function normalizeRecipeVariants(value: unknown, dishName: string): RecipeVariant[] {
+  if (Array.isArray(value)) {
+    const variants = value
+      .filter((item): item is Partial<RecipeVariant> => isRecord(item))
+      .map((item) => ({
+        title: fallbackString(item.title, "Alternate version"),
+        description: fallbackString(item.description, `Another way to make ${dishName}.`),
+        adjustment: fallbackString(item.adjustment, "Adjust ingredients and cooking method to fit your needs."),
+      }))
+      .slice(0, 5);
+
+    if (variants.length) {
+      return variants;
+    }
+  }
+
+  return [
+    {
+      title: "High-protein version",
+      description: `Add a lean protein to make ${dishName} more filling.`,
+      adjustment: "Use chicken, tofu, beans, eggs, or Greek-yogurt-based sauces when they fit the dish.",
+    },
+    {
+      title: "Cheaper version",
+      description: "Use store-brand staples and skip optional specialty toppings.",
+      adjustment: "Lean on pantry seasonings, frozen vegetables, and ingredients you already have.",
+    },
+    {
+      title: "Spicy version",
+      description: "Add heat without changing the whole recipe.",
+      adjustment: "Use chili flakes, hot sauce, chili oil, or jalapeno a little at a time.",
+    },
+  ];
 }
 
 function normalizeAppliedPreferences(value: unknown, preferences: string) {

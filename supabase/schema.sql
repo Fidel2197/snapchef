@@ -14,6 +14,10 @@ create table if not exists public.snapchef_scans (
 
 alter table public.snapchef_scans enable row level security;
 
+drop policy if exists "Users can read their own scans" on public.snapchef_scans;
+drop policy if exists "Users can insert their own scans" on public.snapchef_scans;
+drop policy if exists "Users can delete their own scans" on public.snapchef_scans;
+
 create policy "Users can read their own scans"
   on public.snapchef_scans
   for select
@@ -28,3 +32,32 @@ create policy "Users can delete their own scans"
   on public.snapchef_scans
   for delete
   using (auth.uid() = user_id);
+
+insert into storage.buckets (id, name, public)
+values ('snapchef-scans', 'snapchef-scans', true)
+on conflict (id) do update set public = true;
+
+drop policy if exists "Users can read scan images" on storage.objects;
+drop policy if exists "Users can upload their own scan images" on storage.objects;
+drop policy if exists "Users can delete their own scan images" on storage.objects;
+
+create policy "Users can read scan images"
+  on storage.objects
+  for select
+  using (bucket_id = 'snapchef-scans');
+
+create policy "Users can upload their own scan images"
+  on storage.objects
+  for insert
+  with check (
+    bucket_id = 'snapchef-scans'
+    and auth.uid()::text = (storage.foldername(name))[1]
+  );
+
+create policy "Users can delete their own scan images"
+  on storage.objects
+  for delete
+  using (
+    bucket_id = 'snapchef-scans'
+    and auth.uid()::text = (storage.foldername(name))[1]
+  );

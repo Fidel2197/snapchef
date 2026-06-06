@@ -1,6 +1,17 @@
 "use client";
 
-import { ChangeEvent, DragEvent, FormEvent, useMemo, useRef, useState } from "react";
+import {
+  ChangeEvent,
+  DragEvent,
+  FormEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import type { Session } from "@supabase/supabase-js";
+import { getSupabaseBrowserClient } from "@/lib/supabase";
 import styles from "./snapchef-app.module.css";
 
 type Confidence = "high" | "medium" | "low";
@@ -40,6 +51,20 @@ type SearchLink = {
   url: string;
 };
 
+type NutritionEstimate = {
+  calories: string;
+  protein: string;
+  carbs: string;
+  fat: string;
+  note: string;
+};
+
+type RecipeVariant = {
+  title: string;
+  description: string;
+  adjustment: string;
+};
+
 type SnapChefResult = {
   dishName: string;
   confidence: Confidence;
@@ -51,16 +76,29 @@ type SnapChefResult = {
   safetyNotes: string[];
   searchLinks: SearchLink[];
   shoppingPlan: ShoppingPlan;
+  nutritionEstimate: NutritionEstimate;
+  recipeVariants: RecipeVariant[];
   appliedPreferences: string[];
   exampleMode?: boolean;
   notice?: string;
+};
+
+type SavedScan = {
+  id: string;
+  dish_name: string;
+  confidence: Confidence;
+  summary: string;
+  result: SnapChefResult;
+  image_path: string | null;
+  created_at: string;
 };
 
 type ApiError = {
   error: string;
 };
 
-type ResultTab = "recipe" | "ingredients" | "shopping" | "videos";
+type ResultTab = "recipe" | "ingredients" | "shopping" | "nutrition" | "ideas" | "videos";
+type MainView = "scan" | "history";
 
 const preferencePresets = [
   { label: "College budget", value: "college budget, cheap ingredients, price estimates" },
@@ -71,6 +109,11 @@ const preferencePresets = [
   { label: "Dairy-free", value: "dairy free, avoid milk cheese butter cream" },
   { label: "No peanuts", value: "no peanuts, peanut allergy aware" },
   { label: "Meal prep", value: "meal prep friendly, leftovers, reheats well" },
+  { label: "Microwave", value: "microwave only, dorm friendly, no stove" },
+  { label: "Air fryer", value: "air fryer, minimal oil, crispy finish" },
+  { label: "No oven", value: "no oven, stovetop or microwave method" },
+  { label: "One pot", value: "one pot, easy cleanup, minimal equipment" },
+  { label: "Dorm kitchen", value: "dorm kitchen, budget tools, limited equipment" },
 ];
 
 const confidenceGuide = [
@@ -315,6 +358,30 @@ const exampleResult: SnapChefResult = {
       "Buy store-brand pasta and save the extra servings for another meal.",
     ],
   },
+  nutritionEstimate: {
+    calories: "520 calories",
+    protein: "18g protein",
+    carbs: "74g carbs",
+    fat: "15g fat",
+    note: "Estimated per serving. Actual nutrition changes with brands, portions, oil, cheese, and added protein.",
+  },
+  recipeVariants: [
+    {
+      title: "High-protein version",
+      description: "Add grilled chicken, tofu, white beans, or chickpea pasta.",
+      adjustment: "Keep the sauce the same and add protein during the final toss.",
+    },
+    {
+      title: "Cheaper version",
+      description: "Use canned tomatoes, dried herbs, and skip parmesan.",
+      adjustment: "Add a little pasta water to make the sauce feel fuller.",
+    },
+    {
+      title: "Spicy version",
+      description: "Add chili flakes, calabrian chili, or hot sauce.",
+      adjustment: "Bloom the spice in olive oil before adding tomatoes.",
+    },
+  ],
   appliedPreferences: ["college budget", "quick meal"],
   searchLinks: [
     {
@@ -330,6 +397,7 @@ const exampleResult: SnapChefResult = {
 };
 
 export default function SnapChefApp() {
+  const supabase = useMemo(() => getSupabaseBrowserClient(), []);
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState("");
   const [selectedPresets, setSelectedPresets] = useState<string[]>([]);
@@ -339,7 +407,26 @@ export default function SnapChefApp() {
   const [activeTab, setActiveTab] = useState<ResultTab>("recipe");
   const [error, setError] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [session, setSession] = useState<Session | null>(null);
+  const [authEmail, setAuthEmail] = useState("");
+  const [authPassword, setAuthPassword] = useState("");
+  const [authMessage, setAuthMessage] = useState("");
+  const [authError, setAuthError] = useState("");
+  const [isAuthBusy, setIsAuthBusy] = useState(false);
+  const [savedScans, setSavedScans] = useState<SavedScan[]>([]);
+  const [selectedSavedScanId, setSelectedSavedScanId] = useState<string | null>(null);
+  const [isHistoryLoading, setIsHistoryLoading] = useState(false);
+  const [historyError, setHistoryError] = useState("");
+  const [isSavingScan, setIsSavingScan] = useState(false);
+  const [saveStatus, setSaveStatus] = useState("");
+  const [mainView, setMainView] = useState<MainView>("scan");
+  const [isAuthPanelOpen, setIsAuthPanelOpen] = useState(false);
+  const [isEditingDishName, setIsEditingDishName] = useState(false);
+  const [dishNameDraft, setDishNameDraft] = useState("");
+  const [actionStatus, setActionStatus] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const user = session?.user ?? null;
+  const displayName = user?.email?.split("@")[0] || "My recipes";
 
   const confidenceText = useMemo(() => {
     if (!result) {
@@ -364,6 +451,76 @@ export default function SnapChefApp() {
 
   const resultPhoto = previewUrl || "/snapchef-food-board.png";
   const isScanActive = isAnalyzing || Boolean(result);
+
+  function getSavedScanImageUrl(scan: SavedScan) {
+    if (!scan.image_path || scan.image_path === "local-preview") {
+      return "";
+    }
+
+    if (scan.image_path.startsWith("http")) {
+      return scan.image_path;
+    }
+
+    return supabase?.storage.from("snapchef-scans").getPublicUrl(scan.image_path).data.publicUrl || "";
+  }
+
+  const loadSavedScans = useCallback(async (currentSession: Session | null) => {
+    if (!supabase || !currentSession?.user) {
+      setSavedScans([]);
+      setHistoryError("");
+      return;
+    }
+
+    setIsHistoryLoading(true);
+    setHistoryError("");
+
+    const { data, error: loadError } = await supabase
+      .from("snapchef_scans")
+      .select("id,dish_name,confidence,summary,result,image_path,created_at")
+      .order("created_at", { ascending: false })
+      .limit(10);
+
+    if (loadError) {
+      setHistoryError(loadError.message);
+      setSavedScans([]);
+    } else {
+      setSavedScans(
+        ((data ?? []) as SavedScan[]).map((scan) => ({
+          ...scan,
+          result: ensureClientResult(scan.result),
+        })),
+      );
+    }
+
+    setIsHistoryLoading(false);
+  }, [supabase]);
+
+  useEffect(() => {
+    if (!supabase) {
+      return;
+    }
+
+    let isMounted = true;
+
+    supabase.auth.getSession().then(({ data }) => {
+      if (isMounted) {
+        setSession(data.session);
+        void loadSavedScans(data.session);
+      }
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, currentSession) => {
+      setSession(currentSession);
+      void loadSavedScans(currentSession);
+    });
+
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
+  }, [loadSavedScans, supabase]);
 
   function togglePreset(value: string) {
     setSelectedPresets((current) =>
@@ -394,6 +551,8 @@ export default function SnapChefApp() {
     setPreviewUrl(URL.createObjectURL(selectedFile));
     setResult(null);
     setError("");
+    setMainView("scan");
+    setActionStatus("");
   }
 
   function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
@@ -434,7 +593,13 @@ export default function SnapChefApp() {
         throw new Error(message);
       }
 
-      setResult(data as SnapChefResult);
+      const nextResult = ensureClientResult(data as SnapChefResult);
+      setResult(nextResult);
+      setDishNameDraft(nextResult.dishName);
+      setSelectedSavedScanId(null);
+      setSaveStatus("");
+      setActionStatus("");
+      setMainView("scan");
       setActiveTab("recipe");
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : "Something went wrong.");
@@ -445,6 +610,11 @@ export default function SnapChefApp() {
 
   function loadExample() {
     setResult(exampleResult);
+    setDishNameDraft(exampleResult.dishName);
+    setSelectedSavedScanId(null);
+    setSaveStatus("");
+    setActionStatus("");
+    setMainView("scan");
     setActiveTab("recipe");
     setError("");
   }
@@ -459,9 +629,273 @@ export default function SnapChefApp() {
     setError("");
     setSelectedPresets([]);
     setCustomPreferences("");
+    setSelectedSavedScanId(null);
+    setSaveStatus("");
+    setActionStatus("");
+    setIsEditingDishName(false);
+    setDishNameDraft("");
+    setMainView("scan");
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
+  }
+
+  async function handleAuth(mode: "signIn" | "signUp") {
+    if (!supabase) {
+      setAuthError("Add your Supabase URL and publishable key to .env.local, then restart.");
+      return;
+    }
+
+    const email = authEmail.trim();
+
+    if (!email || authPassword.length < 6) {
+      setAuthError("Use an email and a password with at least 6 characters.");
+      return;
+    }
+
+    setIsAuthBusy(true);
+    setAuthError("");
+    setAuthMessage("");
+
+    const credentials = { email, password: authPassword };
+    const { data, error: authActionError } =
+      mode === "signUp"
+        ? await supabase.auth.signUp(credentials)
+        : await supabase.auth.signInWithPassword(credentials);
+
+    if (authActionError) {
+      setAuthError(authActionError.message);
+    } else if (mode === "signUp" && !data.session) {
+      setAuthMessage("Account created. Check your email if Supabase asks for confirmation.");
+    } else {
+      setAuthMessage(mode === "signUp" ? "Account created and signed in." : "Signed in.");
+      setAuthPassword("");
+    }
+
+    setIsAuthBusy(false);
+  }
+
+  async function signOut() {
+    if (!supabase) {
+      return;
+    }
+
+    await supabase.auth.signOut();
+    setSavedScans([]);
+    setSelectedSavedScanId(null);
+    setSaveStatus("");
+    setAuthMessage("Signed out.");
+  }
+
+  async function uploadScanImageForHistory() {
+    if (!supabase || !user || !file) {
+      return { path: null, error: "" };
+    }
+
+    const extension = file.name.split(".").pop()?.toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
+    const path = `${user.id}/${crypto.randomUUID()}.${extension}`;
+    const { error: uploadError } = await supabase.storage
+      .from("snapchef-scans")
+      .upload(path, file, {
+        contentType: file.type,
+        upsert: false,
+      });
+
+    if (uploadError) {
+      return { path: null, error: uploadError.message };
+    }
+
+    return { path, error: "" };
+  }
+
+  async function saveCurrentScan() {
+    if (!supabase || !user || !result) {
+      setSaveStatus("Sign in first, then save this scan.");
+      return;
+    }
+
+    if (result.exampleMode) {
+      setSaveStatus("Example results are not saved. Upload a food photo first.");
+      return;
+    }
+
+    setIsSavingScan(true);
+    setSaveStatus("");
+    const uploadedImage = await uploadScanImageForHistory();
+
+    const { data, error: saveError } = await supabase
+      .from("snapchef_scans")
+      .insert({
+        user_id: user.id,
+        dish_name: result.dishName,
+        confidence: result.confidence,
+        summary: result.summary,
+        result,
+        image_path: uploadedImage.path,
+      })
+      .select("id,dish_name,confidence,summary,result,image_path,created_at")
+      .single();
+
+    if (saveError) {
+      setSaveStatus(saveError.message);
+    } else if (data) {
+      const savedScan = {
+        ...(data as SavedScan),
+        result: ensureClientResult((data as SavedScan).result),
+      };
+      setSavedScans((current) => [
+        savedScan,
+        ...current.filter((scan) => scan.id !== savedScan.id),
+      ].slice(0, 10));
+      setSelectedSavedScanId(savedScan.id);
+      setSaveStatus(
+        uploadedImage.error
+          ? "Saved recipe. Image storage needs the updated Supabase schema."
+          : "Saved to your scan history.",
+      );
+      setMainView("history");
+    }
+
+    setIsSavingScan(false);
+  }
+
+  function openSavedScan(scan: SavedScan) {
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+
+    setFile(null);
+    setPreviewUrl(getSavedScanImageUrl(scan));
+    const savedResult = ensureClientResult(scan.result);
+    setResult(savedResult);
+    setDishNameDraft(savedResult.dishName);
+    setSelectedSavedScanId(scan.id);
+    setSaveStatus("Loaded from your scan history.");
+    setActionStatus("");
+    setMainView("scan");
+    setActiveTab("recipe");
+    setError("");
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  }
+
+  async function deleteSavedScan(scanId: string) {
+    if (!supabase || !user) {
+      return;
+    }
+
+    const scanToDelete = savedScans.find((scan) => scan.id === scanId);
+    const { error: deleteError } = await supabase
+      .from("snapchef_scans")
+      .delete()
+      .eq("id", scanId);
+
+    if (deleteError) {
+      setHistoryError(deleteError.message);
+      return;
+    }
+
+    if (
+      scanToDelete?.image_path &&
+      !scanToDelete.image_path.startsWith("http") &&
+      scanToDelete.image_path !== "local-preview"
+    ) {
+      await supabase.storage.from("snapchef-scans").remove([scanToDelete.image_path]);
+    }
+
+    setSavedScans((current) => current.filter((scan) => scan.id !== scanId));
+    if (selectedSavedScanId === scanId) {
+      setSelectedSavedScanId(null);
+    }
+  }
+
+  function startDishNameEdit() {
+    if (!result) {
+      return;
+    }
+
+    setDishNameDraft(result.dishName);
+    setIsEditingDishName(true);
+  }
+
+  function applyDishNameEdit() {
+    const nextName = dishNameDraft.trim();
+
+    if (!result || !nextName) {
+      return;
+    }
+
+    setResult({
+      ...result,
+      dishName: nextName,
+      recipe: {
+        ...result.recipe,
+        title: result.recipe.title.includes(result.dishName)
+          ? result.recipe.title.replace(result.dishName, nextName)
+          : result.recipe.title,
+      },
+      searchLinks: buildClientSearchLinks(nextName),
+    });
+    setSelectedSavedScanId(null);
+    setSaveStatus("Dish name updated. Save again to keep this version.");
+    setActionStatus("Updated detected dish name.");
+    setIsEditingDishName(false);
+  }
+
+  async function copyShoppingList() {
+    if (!result) {
+      return;
+    }
+
+    await navigator.clipboard.writeText(formatShoppingList(result));
+    setActionStatus("Shopping list copied.");
+  }
+
+  async function copyRecipe() {
+    if (!result) {
+      return;
+    }
+
+    await navigator.clipboard.writeText(formatRecipeForExport(result));
+    setActionStatus("Recipe copied.");
+  }
+
+  function downloadRecipe() {
+    if (!result) {
+      return;
+    }
+
+    const fileName = `${slugify(result.dishName)}-snapchef-recipe.txt`;
+    const blob = new Blob([formatRecipeForExport(result)], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = fileName;
+    link.click();
+    URL.revokeObjectURL(url);
+    setActionStatus("Recipe download started.");
+  }
+
+  async function shareRecipe() {
+    if (!result) {
+      return;
+    }
+
+    const text = formatRecipeForExport(result);
+
+    if (navigator.share) {
+      await navigator.share({
+        title: `${result.dishName} from SnapChef`,
+        text,
+      });
+      setActionStatus("Share sheet opened.");
+      return;
+    }
+
+    await navigator.clipboard.writeText(text);
+    setActionStatus("Recipe copied for sharing.");
   }
 
   return (
@@ -472,8 +906,49 @@ export default function SnapChefApp() {
             <span className={styles.logoMark}>SC</span>
             <span>SnapChef</span>
           </div>
-          <span className={styles.statusBadge}>{confidenceText}</span>
+          <div className={styles.headerActions}>
+            <span className={styles.statusBadge}>{confidenceText}</span>
+            <button
+              className={mainView === "history" ? styles.activeNavButton : styles.navButton}
+              onClick={() => setMainView((view) => (view === "history" ? "scan" : "history"))}
+              type="button"
+            >
+              My Scans
+            </button>
+            <button
+              className={styles.accountButton}
+              onClick={() => setIsAuthPanelOpen((isOpen) => !isOpen)}
+              type="button"
+            >
+              {user ? `Hi ${displayName}` : "Sign in / Create account"}
+            </button>
+          </div>
         </header>
+
+        {isAuthPanelOpen ? (
+          <div className={styles.authPopover}>
+            <AccountHistoryPanel
+              authEmail={authEmail}
+              authError={authError}
+              authMessage={authMessage}
+              authPassword={authPassword}
+              historyError={historyError}
+              isAuthBusy={isAuthBusy}
+              isHistoryLoading={isHistoryLoading}
+              isSupabaseReady={Boolean(supabase)}
+              onAuthEmailChange={setAuthEmail}
+              onAuthPasswordChange={setAuthPassword}
+              onDeleteScan={deleteSavedScan}
+              onOpenScan={openSavedScan}
+              onSignIn={() => handleAuth("signIn")}
+              onSignOut={signOut}
+              onSignUp={() => handleAuth("signUp")}
+              savedScans={savedScans}
+              selectedSavedScanId={selectedSavedScanId}
+              userEmail={user?.email ?? ""}
+            />
+          </div>
+        ) : null}
 
         {isAnalyzing ? (
           <ScanProgress
@@ -645,7 +1120,20 @@ export default function SnapChefApp() {
 
       <section className={styles.resultPanel} aria-live="polite">
         <div className={styles.resultCanvas}>
-          {result ? (
+          {mainView === "history" ? (
+            <HistoryView
+              historyError={historyError}
+              isHistoryLoading={isHistoryLoading}
+              isSupabaseReady={Boolean(supabase)}
+              onDeleteScan={deleteSavedScan}
+              onOpenScan={openSavedScan}
+              onShowAuth={() => setIsAuthPanelOpen(true)}
+              savedScans={savedScans}
+              selectedSavedScanId={selectedSavedScanId}
+              userEmail={user?.email ?? ""}
+              getSavedScanImageUrl={getSavedScanImageUrl}
+            />
+          ) : result ? (
             <>
               <div
                 className={styles.resultPhoto}
@@ -656,16 +1144,35 @@ export default function SnapChefApp() {
                 <span>{result.exampleMode ? "Example result" : "Your scan"}</span>
               </div>
 
-              <div className={styles.resultHeader}>
-                <div>
-                  <p className={styles.eyebrow}>Detected dish</p>
-                  <h2>{result.dishName}</h2>
-                </div>
-                <span className={styles.confidencePill}>{result.confidence}</span>
-              </div>
+              <EditableDishHeader
+                confidence={result.confidence}
+                dishNameDraft={dishNameDraft}
+                isEditing={isEditingDishName}
+                onApply={applyDishNameEdit}
+                onCancel={() => setIsEditingDishName(false)}
+                onDraftChange={setDishNameDraft}
+                onEdit={startDishNameEdit}
+                result={result}
+              />
               <p className={styles.summary}>{result.summary}</p>
 
               {result.notice ? <p className={styles.notice}>{result.notice}</p> : null}
+
+              <ResultActionBar
+                actionStatus={actionStatus}
+                isSavingScan={isSavingScan}
+                onCopyGroceryList={copyShoppingList}
+                onCopyRecipe={copyRecipe}
+                onDownloadRecipe={downloadRecipe}
+                onSave={saveCurrentScan}
+                onScanAnother={resetScan}
+                onShareRecipe={shareRecipe}
+                saveStatus={saveStatus}
+                selectedSavedScanId={selectedSavedScanId}
+                userEmail={user?.email ?? ""}
+              />
+
+              <AllergyWarning />
 
               <ConfidenceGuide confidence={result.confidence} />
 
@@ -680,6 +1187,7 @@ export default function SnapChefApp() {
                 <span>{result.ingredients.length} ingredients</span>
                 <span>{result.recipe.time}</span>
                 <span>{result.shoppingPlan.estimatedPerServing}</span>
+                <span>{result.nutritionEstimate.protein}</span>
                 <span>{result.searchLinks.length} video searches</span>
               </div>
 
@@ -706,6 +1214,20 @@ export default function SnapChefApp() {
                   Shopping
                 </button>
                 <button
+                  className={activeTab === "nutrition" ? styles.activeTab : ""}
+                  onClick={() => setActiveTab("nutrition")}
+                  type="button"
+                >
+                  Nutrition
+                </button>
+                <button
+                  className={activeTab === "ideas" ? styles.activeTab : ""}
+                  onClick={() => setActiveTab("ideas")}
+                  type="button"
+                >
+                  Ideas
+                </button>
+                <button
                   className={activeTab === "videos" ? styles.activeTab : ""}
                   onClick={() => setActiveTab("videos")}
                   type="button"
@@ -717,6 +1239,8 @@ export default function SnapChefApp() {
               {activeTab === "recipe" ? <RecipeView result={result} /> : null}
               {activeTab === "ingredients" ? <IngredientsView result={result} /> : null}
               {activeTab === "shopping" ? <ShoppingView result={result} /> : null}
+              {activeTab === "nutrition" ? <NutritionView result={result} /> : null}
+              {activeTab === "ideas" ? <IdeasView result={result} /> : null}
               {activeTab === "videos" ? <VideosView result={result} /> : null}
             </>
           ) : (
@@ -817,6 +1341,355 @@ export default function SnapChefApp() {
         </div>
       </section>
     </main>
+  );
+}
+
+function EditableDishHeader({
+  confidence,
+  dishNameDraft,
+  isEditing,
+  onApply,
+  onCancel,
+  onDraftChange,
+  onEdit,
+  result,
+}: {
+  confidence: Confidence;
+  dishNameDraft: string;
+  isEditing: boolean;
+  onApply: () => void;
+  onCancel: () => void;
+  onDraftChange: (value: string) => void;
+  onEdit: () => void;
+  result: SnapChefResult;
+}) {
+  return (
+    <div className={styles.resultHeader}>
+      <div className={styles.editableDishHeader}>
+        <p className={styles.eyebrow}>Detected dish</p>
+        {isEditing ? (
+          <div className={styles.editDishForm}>
+            <input
+              aria-label="Detected dish name"
+              onChange={(event) => onDraftChange(event.target.value)}
+              value={dishNameDraft}
+            />
+            <button onClick={onApply} type="button">
+              Apply
+            </button>
+            <button onClick={onCancel} type="button">
+              Cancel
+            </button>
+          </div>
+        ) : (
+          <>
+            <h2>{result.dishName}</h2>
+            <button className={styles.inlineEditButton} onClick={onEdit} type="button">
+              Wrong dish? Edit name
+            </button>
+          </>
+        )}
+      </div>
+      <span className={styles.confidencePill}>{confidence}</span>
+    </div>
+  );
+}
+
+function ResultActionBar({
+  actionStatus,
+  isSavingScan,
+  onCopyGroceryList,
+  onCopyRecipe,
+  onDownloadRecipe,
+  onSave,
+  onScanAnother,
+  onShareRecipe,
+  saveStatus,
+  selectedSavedScanId,
+  userEmail,
+}: {
+  actionStatus: string;
+  isSavingScan: boolean;
+  onCopyGroceryList: () => void;
+  onCopyRecipe: () => void;
+  onDownloadRecipe: () => void;
+  onSave: () => void;
+  onScanAnother: () => void;
+  onShareRecipe: () => void;
+  saveStatus: string;
+  selectedSavedScanId: string | null;
+  userEmail: string;
+}) {
+  return (
+    <div className={styles.resultActionBar}>
+      <div className={styles.resultActionSummary}>
+        <span>Recipe actions</span>
+        <strong>
+          {selectedSavedScanId ? "Saved recipe" : userEmail ? "Ready to save" : "Sign in to save"}
+        </strong>
+        {saveStatus || actionStatus ? <small>{saveStatus || actionStatus}</small> : null}
+      </div>
+      <div className={styles.resultActions}>
+        <button disabled={isSavingScan || !userEmail} onClick={onSave} type="button">
+          {isSavingScan ? "Saving..." : "Save Recipe"}
+        </button>
+        <button onClick={onScanAnother} type="button">
+          Scan Another Photo
+        </button>
+        <button onClick={onCopyGroceryList} type="button">
+          Copy Grocery List
+        </button>
+        <button onClick={onCopyRecipe} type="button">
+          Copy Recipe
+        </button>
+        <button onClick={onDownloadRecipe} type="button">
+          Download
+        </button>
+        <button onClick={onShareRecipe} type="button">
+          Share
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function AllergyWarning() {
+  return (
+    <div className={styles.allergyWarning}>
+      <span>Allergy Check</span>
+      <strong>
+        SnapChef may not detect hidden ingredients. Always check labels and ask about dairy, nuts,
+        gluten, shellfish, and other allergens before eating.
+      </strong>
+    </div>
+  );
+}
+
+function HistoryView({
+  getSavedScanImageUrl,
+  historyError,
+  isHistoryLoading,
+  isSupabaseReady,
+  onDeleteScan,
+  onOpenScan,
+  onShowAuth,
+  savedScans,
+  selectedSavedScanId,
+  userEmail,
+}: {
+  getSavedScanImageUrl: (scan: SavedScan) => string;
+  historyError: string;
+  isHistoryLoading: boolean;
+  isSupabaseReady: boolean;
+  onDeleteScan: (scanId: string) => void;
+  onOpenScan: (scan: SavedScan) => void;
+  onShowAuth: () => void;
+  savedScans: SavedScan[];
+  selectedSavedScanId: string | null;
+  userEmail: string;
+}) {
+  return (
+    <section className={styles.historyView}>
+      <div className={styles.historyHero}>
+        <p className={styles.eyebrow}>My Scans</p>
+        <h2>Saved recipes and scan history.</h2>
+        <p>
+          Reopen previous results, reuse grocery lists, and keep the recipes that worked for you.
+        </p>
+      </div>
+
+      {!isSupabaseReady ? (
+        <p className={styles.notice}>Add Supabase environment variables, then restart the app.</p>
+      ) : null}
+
+      {!userEmail ? (
+        <div className={styles.emptyHistoryState}>
+          <strong>Sign in to build your recipe history.</strong>
+          <button onClick={onShowAuth} type="button">
+            Sign in / Create account
+          </button>
+        </div>
+      ) : null}
+
+      {userEmail && isHistoryLoading ? <p className={styles.priceNote}>Loading saved scans...</p> : null}
+      {historyError ? <p className={styles.errorText}>{historyError}</p> : null}
+
+      {userEmail && savedScans.length ? (
+        <div className={styles.historyGrid}>
+          {savedScans.map((scan) => {
+            const imageUrl = getSavedScanImageUrl(scan);
+
+            return (
+              <article
+                className={scan.id === selectedSavedScanId ? styles.activeHistoryCard : ""}
+                key={scan.id}
+              >
+                <button className={styles.historyCardMain} onClick={() => onOpenScan(scan)} type="button">
+                  <span
+                    className={styles.savedScanThumb}
+                    style={{
+                      backgroundImage: imageUrl ? `url(${imageUrl})` : "url(/snapchef-food-board.png)",
+                    }}
+                    aria-hidden="true"
+                  />
+                  <span className={styles.historyCardText}>
+                    <small>{new Date(scan.created_at).toLocaleString()}</small>
+                    <strong>{scan.dish_name}</strong>
+                    <em>
+                      {scan.result.recipe.time} - {scan.result.shoppingPlan.estimatedPerServing}
+                    </em>
+                    {scan.result.appliedPreferences?.length ? (
+                      <span>{scan.result.appliedPreferences.slice(0, 3).join(", ")}</span>
+                    ) : null}
+                  </span>
+                </button>
+                <button className={styles.deleteScanButton} onClick={() => onDeleteScan(scan.id)} type="button">
+                  Delete
+                </button>
+              </article>
+            );
+          })}
+        </div>
+      ) : null}
+
+      {userEmail && !isHistoryLoading && !savedScans.length ? (
+        <div className={styles.emptyHistoryState}>
+          <strong>No saved scans yet.</strong>
+          <span>Analyze a food image, then hit Save Recipe.</span>
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+function AccountHistoryPanel({
+  authEmail,
+  authError,
+  authMessage,
+  authPassword,
+  historyError,
+  isAuthBusy,
+  isHistoryLoading,
+  isSupabaseReady,
+  onAuthEmailChange,
+  onAuthPasswordChange,
+  onDeleteScan,
+  onOpenScan,
+  onSignIn,
+  onSignOut,
+  onSignUp,
+  savedScans,
+  selectedSavedScanId,
+  userEmail,
+}: {
+  authEmail: string;
+  authError: string;
+  authMessage: string;
+  authPassword: string;
+  historyError: string;
+  isAuthBusy: boolean;
+  isHistoryLoading: boolean;
+  isSupabaseReady: boolean;
+  onAuthEmailChange: (value: string) => void;
+  onAuthPasswordChange: (value: string) => void;
+  onDeleteScan: (scanId: string) => void;
+  onOpenScan: (scan: SavedScan) => void;
+  onSignIn: () => void;
+  onSignOut: () => void;
+  onSignUp: () => void;
+  savedScans: SavedScan[];
+  selectedSavedScanId: string | null;
+  userEmail: string;
+}) {
+  return (
+    <section className={styles.accountPanel}>
+      <div className={styles.accountHeader}>
+        <div>
+          <p className={styles.eyebrow}>Account</p>
+          <h2>{userEmail ? "Your scan history" : "Sign in to save scans"}</h2>
+        </div>
+        {userEmail ? (
+          <button className={styles.clearPresetButton} onClick={onSignOut} type="button">
+            Sign out
+          </button>
+        ) : null}
+      </div>
+
+      {!isSupabaseReady ? (
+        <p className={styles.authNotice}>
+          Add Supabase keys to .env.local and restart the app to enable history.
+        </p>
+      ) : null}
+
+      {userEmail ? (
+        <>
+          <p className={styles.authNotice}>Signed in as {userEmail}</p>
+          {isHistoryLoading ? <p className={styles.authNotice}>Loading saved scans...</p> : null}
+          {historyError ? <p className={styles.errorText}>{historyError}</p> : null}
+          {savedScans.length ? (
+            <div className={styles.savedScanList}>
+              {savedScans.map((scan) => (
+                <article
+                  className={scan.id === selectedSavedScanId ? styles.activeSavedScan : ""}
+                  key={scan.id}
+                >
+                  <button onClick={() => onOpenScan(scan)} type="button">
+                    <span>{scan.confidence} confidence</span>
+                    <strong>{scan.dish_name}</strong>
+                    <small>{new Date(scan.created_at).toLocaleString()}</small>
+                  </button>
+                  <button
+                    aria-label={`Delete ${scan.dish_name}`}
+                    className={styles.deleteScanButton}
+                    onClick={() => onDeleteScan(scan.id)}
+                    type="button"
+                  >
+                    Delete
+                  </button>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <p className={styles.authNotice}>No saved scans yet. Analyze an image, then save it.</p>
+          )}
+        </>
+      ) : (
+        <div className={styles.authForm}>
+          <label className={styles.field}>
+            <span>Email</span>
+            <input
+              autoComplete="email"
+              disabled={!isSupabaseReady || isAuthBusy}
+              onChange={(event) => onAuthEmailChange(event.target.value)}
+              placeholder="you@example.com"
+              type="email"
+              value={authEmail}
+            />
+          </label>
+          <label className={styles.field}>
+            <span>Password</span>
+            <input
+              autoComplete="current-password"
+              disabled={!isSupabaseReady || isAuthBusy}
+              onChange={(event) => onAuthPasswordChange(event.target.value)}
+              placeholder="At least 6 characters"
+              type="password"
+              value={authPassword}
+            />
+          </label>
+          <div className={styles.authActions}>
+            <button disabled={!isSupabaseReady || isAuthBusy} onClick={onSignIn} type="button">
+              Sign in
+            </button>
+            <button disabled={!isSupabaseReady || isAuthBusy} onClick={onSignUp} type="button">
+              Create account
+            </button>
+          </div>
+          {authError ? <p className={styles.errorText}>{authError}</p> : null}
+          {authMessage ? <p className={styles.authNotice}>{authMessage}</p> : null}
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -1013,24 +1886,23 @@ function GuideGrid({ cards }: { cards: { label: string; value: string }[] }) {
 }
 
 function ConfidenceGuide({ confidence }: { confidence: Confidence }) {
+  const currentGuide = confidenceGuide.find((item) => item.level === confidence) ?? confidenceGuide[1];
+
   return (
-    <div className={styles.confidenceGuide}>
-      <div className={styles.confidenceGuideHeader}>
-        <span>Confidence guide</span>
-        <strong>{confidence} confidence means SnapChef is estimating from the photo.</strong>
-      </div>
+    <details className={styles.confidenceGuide}>
+      <summary>
+        <span>{currentGuide.label} confidence</span>
+        <strong>{currentGuide.detail}</strong>
+      </summary>
       <div className={styles.confidenceLevels}>
         {confidenceGuide.map((item) => (
-          <span
-            className={item.level === confidence ? styles.activeConfidence : ""}
-            key={item.level}
-          >
+          <span className={item.level === confidence ? styles.activeConfidence : ""} key={item.level}>
             <strong>{item.label}</strong>
             <small>{item.detail}</small>
           </span>
         ))}
       </div>
-    </div>
+    </details>
   );
 }
 
@@ -1046,6 +1918,7 @@ function IngredientsView({ result }: { result: SnapChefResult }) {
           </li>
         ))}
       </ul>
+      <AllergyWarning />
       <InfoList title="Substitutions" items={result.substitutions} />
       <InfoList title="Nutrition notes" items={result.nutritionNotes} />
       <InfoList title="Safety notes" items={result.safetyNotes} />
@@ -1054,6 +1927,20 @@ function IngredientsView({ result }: { result: SnapChefResult }) {
 }
 
 function ShoppingView({ result }: { result: SnapChefResult }) {
+  const [checkedItems, setCheckedItems] = useState<string[]>([]);
+  const [copyStatus, setCopyStatus] = useState("");
+
+  function toggleItem(name: string) {
+    setCheckedItems((current) =>
+      current.includes(name) ? current.filter((item) => item !== name) : [...current, name],
+    );
+  }
+
+  async function copyList() {
+    await navigator.clipboard.writeText(formatShoppingList(result));
+    setCopyStatus("Shopping list copied.");
+  }
+
   return (
     <div className={styles.shoppingView}>
       <div className={styles.budgetSummary}>
@@ -1067,14 +1954,28 @@ function ShoppingView({ result }: { result: SnapChefResult }) {
         </span>
       </div>
       <p className={styles.priceNote}>{result.shoppingPlan.priceNote}</p>
+      <div className={styles.shoppingToolbar}>
+        <span>{checkedItems.length} of {result.shoppingPlan.items.length} checked</span>
+        <button onClick={copyList} type="button">
+          Copy shopping list
+        </button>
+      </div>
+      {copyStatus ? <p className={styles.copyStatus}>{copyStatus}</p> : null}
 
       <ul className={styles.shoppingGrid}>
         {result.shoppingPlan.items.map((item) => (
           <li key={`${item.name}-${item.amount ?? ""}`}>
-            <div>
-              <strong>{item.name}</strong>
-              <span>{item.amount || "as needed"}</span>
-            </div>
+            <label className={styles.checklistHeader}>
+              <input
+                checked={checkedItems.includes(item.name)}
+                onChange={() => toggleItem(item.name)}
+                type="checkbox"
+              />
+              <span>
+                <strong>{item.name}</strong>
+                <em>{item.amount || "as needed"}</em>
+              </span>
+            </label>
             <p>{item.estimatedPrice || "varies"}</p>
             <small>{item.whereToFind || "grocery store"}</small>
             {item.note ? <em>{item.note}</em> : null}
@@ -1083,6 +1984,53 @@ function ShoppingView({ result }: { result: SnapChefResult }) {
       </ul>
 
       <InfoList title="Money-saving tips" items={result.shoppingPlan.savingTips} />
+    </div>
+  );
+}
+
+function NutritionView({ result }: { result: SnapChefResult }) {
+  const estimate = result.nutritionEstimate;
+
+  return (
+    <div className={styles.nutritionView}>
+      <div className={styles.nutritionGrid}>
+        <span>
+          <small>Calories</small>
+          <strong>{estimate.calories}</strong>
+        </span>
+        <span>
+          <small>Protein</small>
+          <strong>{estimate.protein}</strong>
+        </span>
+        <span>
+          <small>Carbs</small>
+          <strong>{estimate.carbs}</strong>
+        </span>
+        <span>
+          <small>Fat</small>
+          <strong>{estimate.fat}</strong>
+        </span>
+      </div>
+      <p className={styles.priceNote}>{estimate.note}</p>
+      <AllergyWarning />
+      <InfoList title="Nutrition notes" items={result.nutritionNotes} />
+    </div>
+  );
+}
+
+function IdeasView({ result }: { result: SnapChefResult }) {
+  return (
+    <div className={styles.ideasView}>
+      <div className={styles.variantGrid}>
+        {result.recipeVariants.map((variant) => (
+          <article key={variant.title}>
+            <span>{variant.title}</span>
+            <strong>{variant.description}</strong>
+            <p>{variant.adjustment}</p>
+          </article>
+        ))}
+      </div>
+      <InfoList title="Substitutions" items={result.substitutions} />
     </div>
   );
 }
@@ -1115,6 +2063,106 @@ function InfoList({ title, items }: { title: string; items: string[] }) {
       </ul>
     </div>
   );
+}
+
+function buildClientSearchLinks(dishName: string): SearchLink[] {
+  return [
+    {
+      label: `${dishName} recipe tutorial`,
+      url: `https://www.youtube.com/results?search_query=${encodeURIComponent(`${dishName} recipe tutorial`)}`,
+    },
+    {
+      label: `${dishName} beginner recipe`,
+      url: `https://www.youtube.com/results?search_query=${encodeURIComponent(`${dishName} beginner recipe`)}`,
+    },
+  ];
+}
+
+function formatShoppingList(result: SnapChefResult) {
+  return [
+    `${result.dishName} shopping list`,
+    "",
+    ...result.shoppingPlan.items.map((item) => {
+      const amount = item.amount ? ` - ${item.amount}` : "";
+      const price = item.estimatedPrice ? ` (${item.estimatedPrice})` : "";
+      const location = item.whereToFind ? ` - ${item.whereToFind}` : "";
+      return `- ${item.name}${amount}${price}${location}`;
+    }),
+    "",
+    result.shoppingPlan.priceNote,
+  ].join("\n");
+}
+
+function formatRecipeForExport(result: SnapChefResult) {
+  return [
+    result.dishName,
+    result.summary,
+    "",
+    `${result.recipe.title} | ${result.recipe.time} | ${result.recipe.difficulty} | ${result.recipe.servings}`,
+    "",
+    "Ingredients",
+    ...result.ingredients.map((ingredient) => {
+      const amount = ingredient.amount ? ` - ${ingredient.amount}` : "";
+      const note = ingredient.note ? ` (${ingredient.note})` : "";
+      return `- ${ingredient.name}${amount}${note}`;
+    }),
+    "",
+    "Steps",
+    ...result.recipe.steps.map((step, index) => `${index + 1}. ${step}`),
+    "",
+    "Shopping",
+    formatShoppingList(result),
+    "",
+    "Nutrition estimate",
+    `${result.nutritionEstimate.calories}, ${result.nutritionEstimate.protein}, ${result.nutritionEstimate.carbs}, ${result.nutritionEstimate.fat}`,
+    result.nutritionEstimate.note,
+    "",
+    "Allergy check",
+    "SnapChef may not detect hidden ingredients. Always check labels and ask about allergens.",
+  ].join("\n");
+}
+
+function slugify(value: string) {
+  return (
+    value
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "recipe"
+  );
+}
+
+function ensureClientResult(result: SnapChefResult): SnapChefResult {
+  const dishName = result.dishName || "Saved recipe";
+
+  return {
+    ...result,
+    nutritionEstimate: result.nutritionEstimate ?? {
+      calories: "estimate varies",
+      protein: "protein varies",
+      carbs: "carbs vary",
+      fat: "fat varies",
+      note: "Estimated per serving. Actual nutrition changes with portions, brands, cooking oil, sauces, and substitutions.",
+    },
+    recipeVariants: result.recipeVariants?.length
+      ? result.recipeVariants
+      : [
+          {
+            title: "High-protein version",
+            description: `Add a lean protein to make ${dishName} more filling.`,
+            adjustment: "Use chicken, tofu, beans, eggs, or Greek-yogurt-based sauces when they fit the dish.",
+          },
+          {
+            title: "Cheaper version",
+            description: "Use store-brand staples and skip optional specialty toppings.",
+            adjustment: "Lean on pantry seasonings, frozen vegetables, and ingredients you already have.",
+          },
+          {
+            title: "Spicy version",
+            description: "Add heat without changing the whole recipe.",
+            adjustment: "Use chili flakes, hot sauce, chili oil, or jalapeno a little at a time.",
+          },
+        ],
+  };
 }
 
 function isApiError(value: unknown): value is ApiError {

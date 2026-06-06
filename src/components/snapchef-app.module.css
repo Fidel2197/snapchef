@@ -40,7 +40,9 @@
 }
 
 .activeShell .appHeader,
-.activeShell .sidebarGuide {
+.activeShell .sidebarGuide,
+.activeShell .accountPanel,
+.activeShell .authPopover {
   grid-column: 1 / -1;
 }
 
@@ -72,6 +74,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+  position: relative;
+  z-index: 3;
 }
 
 .logoLockup {
@@ -116,6 +120,45 @@
   border: 1px solid rgba(158, 230, 168, 0.45);
   color: #dcfce7;
   background: rgba(255, 255, 255, 0.08);
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.navButton,
+.activeNavButton,
+.accountButton {
+  min-height: 38px;
+  border-radius: 8px;
+  padding: 0 14px;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.navButton {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #f8fff7;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.activeNavButton,
+.accountButton {
+  border: 1px solid rgba(158, 230, 168, 0.58);
+  color: #10241d;
+  background: #9ee6a8;
+}
+
+.authPopover {
+  display: grid;
+  justify-self: end;
+  width: min(100%, 520px);
 }
 
 .heroGrid {
@@ -374,6 +417,126 @@
     rgba(255, 255, 255, 0.04);
 }
 
+.accountPanel {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  background: rgba(8, 22, 17, 0.34);
+}
+
+.accountHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.accountHeader h2 {
+  color: #ffffff;
+  font-size: 1.25rem;
+  line-height: 1.18;
+}
+
+.authForm {
+  display: grid;
+  gap: 12px;
+}
+
+.authActions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.authActions button,
+.saveScanBar button,
+.savedScanList button {
+  min-height: 42px;
+  border-radius: 8px;
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.authActions button,
+.saveScanBar button {
+  border: 1px solid rgba(158, 230, 168, 0.45);
+  color: #10241d;
+  background: #9ee6a8;
+}
+
+.authActions button:last-child {
+  border-color: rgba(248, 195, 91, 0.8);
+  background: #f8c35b;
+}
+
+.authActions button:disabled,
+.saveScanBar button:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+.authNotice {
+  color: #dce9df;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.savedScanList {
+  display: grid;
+  gap: 8px;
+}
+
+.savedScanList article {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.savedScanList button:first-child {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+  justify-items: start;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  padding: 12px;
+  color: #f8fff7;
+  background: rgba(255, 255, 255, 0.08);
+  text-align: left;
+}
+
+.savedScanList article.activeSavedScan button:first-child {
+  border-color: rgba(248, 195, 91, 0.8);
+  background: rgba(248, 195, 91, 0.16);
+}
+
+.savedScanList span {
+  color: #9ee6a8;
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.savedScanList strong {
+  color: #ffffff;
+  line-height: 1.25;
+}
+
+.savedScanList small {
+  color: #c9dbd2;
+  font-size: 0.78rem;
+}
+
+.deleteScanButton {
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  padding: 0 12px;
+  color: #fecaca;
+  background: rgba(255, 255, 255, 0.06);
+}
+
 .sidebarGuideHeader {
   display: grid;
   gap: 6px;
@@ -433,6 +596,139 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 18px;
+}
+
+.editableDishHeader {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.inlineEditButton {
+  width: fit-content;
+  min-height: 34px;
+  border: 1px solid #dfe9dc;
+  border-radius: 8px;
+  padding: 0 12px;
+  color: #14532d;
+  background: #ffffff;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.editDishForm {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) auto auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.editDishForm input {
+  min-height: 46px;
+  min-width: 0;
+  border: 1px solid #cbdccb;
+  border-radius: 8px;
+  padding: 0 12px;
+  color: #12211c;
+  background: #ffffff;
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.editDishForm button,
+.resultActions button,
+.shoppingToolbar button,
+.emptyHistoryState button {
+  min-height: 42px;
+  border-radius: 8px;
+  padding: 0 12px;
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.editDishForm button,
+.resultActions button:first-child,
+.emptyHistoryState button {
+  border: 1px solid #f05d4f;
+  color: #ffffff;
+  background: #f05d4f;
+}
+
+.editDishForm button:last-child,
+.resultActions button,
+.shoppingToolbar button {
+  border: 1px solid #dfe9dc;
+  color: #12211c;
+  background: #ffffff;
+}
+
+.resultActionBar {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid #dfe9dc;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.resultActionSummary {
+  display: grid;
+  gap: 5px;
+  color: #314039;
+}
+
+.resultActionSummary span,
+.allergyWarning span,
+.historyCardText small,
+.nutritionGrid small,
+.variantGrid span {
+  color: #15803d;
+  font-size: 0.76rem;
+  font-weight: 900;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.resultActionSummary strong {
+  color: #12211c;
+  line-height: 1.35;
+}
+
+.resultActionSummary small,
+.copyStatus {
+  color: #52635c;
+  line-height: 1.45;
+}
+
+.resultActions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.resultActions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+.allergyWarning {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid rgba(240, 93, 79, 0.28);
+  border-left: 4px solid #f05d4f;
+  border-radius: 8px;
+  background: #fff4ed;
+}
+
+.allergyWarning strong {
+  color: #7c2d12;
+  line-height: 1.5;
 }
 
 .panelHeader h2 {
@@ -582,6 +878,19 @@
 .ghostButton:focus-visible,
 .clearPresetButton:focus-visible,
 .exampleButton:focus-visible,
+.authActions button:focus-visible,
+.saveScanBar button:focus-visible,
+.savedScanList button:focus-visible,
+.navButton:focus-visible,
+.activeNavButton:focus-visible,
+.accountButton:focus-visible,
+.inlineEditButton:focus-visible,
+.editDishForm input:focus-visible,
+.editDishForm button:focus-visible,
+.resultActions button:focus-visible,
+.shoppingToolbar button:focus-visible,
+.historyCardMain:focus-visible,
+.emptyHistoryState button:focus-visible,
 .presetRow button:focus-visible,
 .tabs button:focus-visible,
 .videoList a:focus-visible {
@@ -767,7 +1076,7 @@
 
 .insightStrip {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 10px;
 }
 
@@ -780,9 +1089,9 @@
 
 .tabs {
   display: inline-grid;
-  grid-template-columns: repeat(4, minmax(96px, 1fr));
+  grid-template-columns: repeat(6, minmax(88px, 1fr));
   gap: 6px;
-  max-width: 540px;
+  width: min(100%, 720px);
   padding: 6px;
   border-radius: 8px;
   background: #e9f2e4;
@@ -814,7 +1123,8 @@
 }
 
 .confidenceGuide,
-.appliedPreferences {
+.appliedPreferences,
+.saveScanBar {
   display: grid;
   gap: 12px;
   padding: 14px;
@@ -824,7 +1134,8 @@
 }
 
 .confidenceGuideHeader,
-.appliedPreferences {
+.appliedPreferences,
+.saveScanBar {
   color: #314039;
 }
 
@@ -833,8 +1144,21 @@
   gap: 5px;
 }
 
+.confidenceGuide summary {
+  display: grid;
+  gap: 5px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.confidenceGuide summary::-webkit-details-marker {
+  display: none;
+}
+
 .confidenceGuideHeader span,
+.confidenceGuide summary span,
 .appliedPreferences span,
+.saveScanBar span,
 .budgetSummary small {
   color: #15803d;
   font-size: 0.76rem;
@@ -844,9 +1168,31 @@
 }
 
 .confidenceGuideHeader strong,
-.appliedPreferences strong {
+.confidenceGuide summary strong,
+.appliedPreferences strong,
+.saveScanBar strong {
   color: #12211c;
   line-height: 1.45;
+}
+
+.saveScanBar {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.saveScanBar div {
+  display: grid;
+  gap: 5px;
+}
+
+.saveScanBar small {
+  color: #52635c;
+  line-height: 1.4;
+}
+
+.saveScanBar button {
+  min-width: 118px;
+  padding: 0 14px;
 }
 
 .confidenceLevels {
@@ -930,20 +1276,14 @@
   background: #ffffff;
 }
 
-.shoppingGrid li div {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-}
-
 .shoppingGrid strong {
   color: #12211c;
 }
 
-.shoppingGrid span {
+.shoppingGrid span,
+.checklistHeader {
   color: #15803d;
   font-weight: 900;
-  text-align: right;
 }
 
 .shoppingGrid p {
@@ -960,6 +1300,196 @@
 
 .shoppingGrid em {
   font-style: normal;
+}
+
+.shoppingToolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid #dfe9dc;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.shoppingToolbar span {
+  color: #314039;
+  font-weight: 900;
+}
+
+.checklistHeader {
+  display: grid;
+  grid-template-columns: 22px 1fr;
+  gap: 10px;
+  align-items: start;
+}
+
+.checklistHeader input {
+  width: 18px;
+  height: 18px;
+  margin-top: 3px;
+  accent-color: #15803d;
+}
+
+.checklistHeader span {
+  display: grid;
+  gap: 4px;
+  color: #12211c;
+}
+
+.checklistHeader em {
+  color: #15803d;
+  font-size: 0.9rem;
+  font-style: normal;
+  font-weight: 900;
+}
+
+.copyStatus {
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #eef8e7;
+}
+
+.historyView {
+  display: grid;
+  gap: 18px;
+}
+
+.historyHero {
+  display: grid;
+  gap: 8px;
+}
+
+.historyHero h2 {
+  color: #12211c;
+  font-size: 2.75rem;
+  line-height: 1;
+}
+
+.historyHero p {
+  color: #4b5b54;
+  line-height: 1.55;
+}
+
+.historyGrid {
+  display: grid;
+  gap: 12px;
+}
+
+.historyGrid article {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid #dfe9dc;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.historyGrid .activeHistoryCard {
+  border-color: rgba(21, 128, 61, 0.45);
+  background: #f4fbef;
+}
+
+.historyCardMain {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr);
+  gap: 12px;
+  align-items: stretch;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.savedScanThumb {
+  min-height: 92px;
+  border-radius: 8px;
+  background-size: cover;
+  background-position: center;
+}
+
+.historyCardText {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+  align-content: center;
+}
+
+.historyCardText strong {
+  color: #12211c;
+  font-size: 1.05rem;
+  line-height: 1.25;
+}
+
+.historyCardText em,
+.historyCardText span,
+.emptyHistoryState span {
+  color: #52635c;
+  font-style: normal;
+  line-height: 1.45;
+}
+
+.emptyHistoryState {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+  border: 1px dashed #cbdccb;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.emptyHistoryState strong {
+  color: #12211c;
+  font-size: 1.1rem;
+}
+
+.nutritionView,
+.ideasView {
+  display: grid;
+  gap: 18px;
+}
+
+.nutritionGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.nutritionGrid span,
+.variantGrid article {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  padding: 16px;
+  border: 1px solid #dfe9dc;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.nutritionGrid strong {
+  color: #12211c;
+  font-size: 1.2rem;
+  line-height: 1.2;
+}
+
+.variantGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.variantGrid strong {
+  color: #12211c;
+  line-height: 1.35;
+}
+
+.variantGrid p {
+  color: #52635c;
+  line-height: 1.5;
 }
 
 .recipeStats {
@@ -1441,6 +1971,9 @@
   .presetRow,
   .guideGrid,
   .insightStrip,
+  .resultActions,
+  .nutritionGrid,
+  .variantGrid,
   .aboutPanel .guideGrid,
   .workflowSteps {
     grid-template-columns: 1fr 1fr;
@@ -1476,9 +2009,15 @@
 
   .appHeader,
   .panelHeader,
-  .resultHeader {
+  .resultHeader,
+  .accountHeader {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .headerActions {
+    width: 100%;
+    justify-content: flex-start;
   }
 
   .brandBar h1 {
@@ -1497,6 +2036,7 @@
 
   .controls,
   .actionRow,
+  .editDishForm,
   .metricRow,
   .storyGrid,
   .presetRow,
@@ -1504,16 +2044,24 @@
   .scanSummaryStats,
   .progressSteps,
   .insightStrip,
+  .resultActions,
   .confidenceLevels,
   .budgetSummary,
+  .nutritionGrid,
+  .variantGrid,
   .ingredientGrid,
   .shoppingGrid,
   .videoList,
   .emptyGrid,
   .aboutPanel .guideGrid,
   .workflowSteps,
-  .starterDetails .guideGrid,
-  .starterInfoGrid {
+    .starterDetails .guideGrid,
+  .starterInfoGrid,
+  .authActions,
+  .savedScanList article,
+  .historyGrid article,
+  .historyCardMain,
+  .saveScanBar {
     grid-template-columns: 1fr;
   }
 

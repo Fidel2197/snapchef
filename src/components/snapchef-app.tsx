@@ -1337,6 +1337,26 @@ export default function SnapChefApp() {
                     </a>
                   </div>
                 </section>
+
+                <section className={styles.savePanel}>
+                  <div>
+                    <p className={styles.eyebrow}>Save later</p>
+                    <h3>Keep the good recipes close.</h3>
+                    <p>Sign in to build a small history of meals, grocery lists, and favorite scans.</p>
+                  </div>
+                  <div className={styles.featurePillGrid} aria-label="Saved recipe benefits">
+                    <span>Saved scans</span>
+                    <span>Recipe history</span>
+                    <span>Grocery lists</span>
+                  </div>
+                </section>
+
+                <section className={styles.photoFinishPanel}>
+                  <div>
+                    <p className={styles.eyebrow}>Next plate</p>
+                    <h3>Dorm bowls, leftovers, and quick dinners.</h3>
+                  </div>
+                </section>
               </div>
             </div>
           )}

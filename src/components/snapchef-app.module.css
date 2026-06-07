@@ -116,23 +116,32 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background:
-    linear-gradient(180deg, rgba(255, 251, 239, 0.54), rgba(242, 249, 238, 0.78)),
-    url("/snapchef-ingredients-prep.png");
-  background-size: min(1320px, 116vw) auto;
-  background-position: top center;
+  background-image:
+    linear-gradient(180deg, rgba(255, 251, 239, 0.5), rgba(242, 249, 238, 0.72)),
+    url("/snapchef-ingredients-prep.png"),
+    url("/snapchef-cooking-plan.png"),
+    url("/snapchef-kitchen.png");
+  background-size:
+    auto,
+    min(1320px, 116vw) auto,
+    min(1320px, 116vw) auto,
+    min(1320px, 116vw) auto;
+  background-position:
+    center,
+    top center,
+    center clamp(320px, 54vw, 880px),
+    center clamp(680px, 108vw, 1760px);
   background-repeat: no-repeat;
-  opacity: 0.54;
+  opacity: 0.58;
 }
 
 .resultPanel::after {
   content: "";
   position: absolute;
-  inset: auto 0 0;
-  height: 42%;
+  inset: 0;
   pointer-events: none;
   background:
-    linear-gradient(180deg, transparent, rgba(232, 248, 220, 0.46)),
+    linear-gradient(180deg, transparent 0%, rgba(232, 248, 220, 0.18) 42%, rgba(232, 248, 220, 0.42) 100%),
     repeating-linear-gradient(135deg, rgba(21, 128, 61, 0.04) 0 1px, transparent 1px 18px);
 }
 

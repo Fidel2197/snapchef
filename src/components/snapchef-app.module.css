@@ -104,9 +104,9 @@
   justify-items: center;
   overflow: hidden;
   background:
-    radial-gradient(circle at 16% 12%, rgba(248, 195, 91, 0.16), transparent 22rem),
-    radial-gradient(circle at 86% 28%, rgba(158, 230, 168, 0.22), transparent 26rem),
-    linear-gradient(180deg, rgba(255, 251, 239, 0.96), rgba(242, 249, 238, 0.96)),
+    radial-gradient(circle at 16% 12%, rgba(248, 195, 91, 0.2), transparent 22rem),
+    radial-gradient(circle at 86% 28%, rgba(158, 230, 168, 0.26), transparent 26rem),
+    linear-gradient(180deg, rgba(255, 251, 239, 0.9), rgba(242, 249, 238, 0.88)),
     #fbfbf2;
   color: #15211b;
 }
@@ -117,12 +117,12 @@
   inset: 0;
   pointer-events: none;
   background:
-    linear-gradient(180deg, rgba(251, 251, 242, 0.82), rgba(251, 251, 242, 0.9)),
-    url("/snapchef-food-board.png");
-  background-size: min(1180px, 92vw) auto;
+    linear-gradient(180deg, rgba(255, 251, 239, 0.54), rgba(242, 249, 238, 0.78)),
+    url("/snapchef-ingredients-prep.png");
+  background-size: min(1320px, 116vw) auto;
   background-position: top center;
   background-repeat: no-repeat;
-  opacity: 0.32;
+  opacity: 0.54;
 }
 
 .resultPanel::after {
@@ -132,8 +132,8 @@
   height: 42%;
   pointer-events: none;
   background:
-    linear-gradient(180deg, transparent, rgba(232, 248, 220, 0.54)),
-    repeating-linear-gradient(135deg, rgba(21, 128, 61, 0.03) 0 1px, transparent 1px 18px);
+    linear-gradient(180deg, transparent, rgba(232, 248, 220, 0.46)),
+    repeating-linear-gradient(135deg, rgba(21, 128, 61, 0.04) 0 1px, transparent 1px 18px);
 }
 
 .resultPanel > * {

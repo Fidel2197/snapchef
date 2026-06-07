@@ -396,6 +396,14 @@ const exampleResult: SnapChefResult = {
   exampleMode: true,
 };
 
+function getAuthRedirectUrl() {
+  if (typeof window === "undefined") {
+    return undefined;
+  }
+
+  return `${window.location.origin}/`;
+}
+
 export default function SnapChefApp() {
   const supabase = useMemo(() => getSupabaseBrowserClient(), []);
   const [file, setFile] = useState<File | null>(null);
@@ -658,9 +666,13 @@ export default function SnapChefApp() {
     setAuthMessage("");
 
     const credentials = { email, password: authPassword };
+    const authRedirectUrl = getAuthRedirectUrl();
     const { data, error: authActionError } =
       mode === "signUp"
-        ? await supabase.auth.signUp(credentials)
+        ? await supabase.auth.signUp({
+            ...credentials,
+            options: authRedirectUrl ? { emailRedirectTo: authRedirectUrl } : undefined,
+          })
         : await supabase.auth.signInWithPassword(credentials);
 
     if (authActionError) {

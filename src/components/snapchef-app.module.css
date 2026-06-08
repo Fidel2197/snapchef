@@ -97,6 +97,8 @@
 }
 
 .resultPanel {
+  --result-bg-width: min(1320px, 116vw);
+
   position: relative;
   display: grid;
   align-self: stretch;
@@ -124,10 +126,10 @@
     url("/snapchef-scan-pasta.png");
   background-size:
     auto,
-    min(1320px, 116vw) auto,
-    min(1320px, 116vw) auto,
-    min(1320px, 116vw) auto,
-    min(1240px, 112vw) auto;
+    var(--result-bg-width) auto,
+    var(--result-bg-width) auto,
+    var(--result-bg-width) auto,
+    var(--result-bg-width) auto;
   background-position:
     center,
     top center,

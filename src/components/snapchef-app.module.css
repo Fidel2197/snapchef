@@ -120,18 +120,26 @@
     linear-gradient(180deg, rgba(255, 251, 239, 0.5), rgba(242, 249, 238, 0.72)),
     url("/snapchef-ingredients-prep.png"),
     url("/snapchef-cooking-plan.png"),
-    url("/snapchef-kitchen.png");
+    url("/snapchef-kitchen.png"),
+    url("/snapchef-scan-pasta.png");
   background-size:
     auto,
     min(1320px, 116vw) auto,
     min(1320px, 116vw) auto,
-    min(1320px, 116vw) auto;
+    min(1320px, 116vw) auto,
+    min(1240px, 112vw) auto;
   background-position:
     center,
     top center,
     center clamp(320px, 54vw, 880px),
-    center clamp(680px, 108vw, 1760px);
-  background-repeat: no-repeat;
+    center clamp(680px, 108vw, 1760px),
+    center clamp(1020px, 164vw, 2680px);
+  background-repeat:
+    no-repeat,
+    no-repeat,
+    no-repeat,
+    no-repeat,
+    repeat-y;
   opacity: 0.58;
 }
 

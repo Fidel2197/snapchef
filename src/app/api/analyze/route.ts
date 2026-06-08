@@ -325,6 +325,7 @@ export async function POST(request: Request) {
   const image = formData.get("image");
   const preferences = String(formData.get("preferences") || "").trim();
   const servings = String(formData.get("servings") || "2").trim();
+  const groceryLocation = String(formData.get("groceryLocation") || "").trim().slice(0, 80);
 
   if (!(image instanceof File)) {
     return Response.json({ error: "Image file is required." }, { status: 400 });
@@ -341,19 +342,19 @@ export async function POST(request: Request) {
   const provider = (process.env.AI_PROVIDER || "gemini").toLowerCase();
 
   if (provider === "gemini" && process.env.GEMINI_API_KEY) {
-    return analyzeWithGemini(image, { preferences, servings });
+    return analyzeWithGemini(image, { groceryLocation, preferences, servings });
   }
 
   if (provider === "openai" && process.env.OPENAI_API_KEY) {
-    return analyzeWithOpenAI(image, { preferences, servings });
+    return analyzeWithOpenAI(image, { groceryLocation, preferences, servings });
   }
 
   if (process.env.GEMINI_API_KEY) {
-    return analyzeWithGemini(image, { preferences, servings });
+    return analyzeWithGemini(image, { groceryLocation, preferences, servings });
   }
 
   if (process.env.OPENAI_API_KEY) {
-    return analyzeWithOpenAI(image, { preferences, servings });
+    return analyzeWithOpenAI(image, { groceryLocation, preferences, servings });
   }
 
   return Response.json({
@@ -364,14 +365,18 @@ export async function POST(request: Request) {
 
 async function analyzeWithOpenAI(
   image: File,
-  { preferences, servings }: { preferences: string; servings: string },
+  {
+    groceryLocation,
+    preferences,
+    servings,
+  }: { groceryLocation: string; preferences: string; servings: string },
 ) {
   if (!process.env.OPENAI_API_KEY) {
     return Response.json(exampleResult);
   }
 
   const dataUrl = await fileToDataUrl(image);
-  const prompt = buildPrompt({ preferences, servings });
+  const prompt = buildPrompt({ groceryLocation, preferences, servings });
   const model = process.env.OPENAI_MODEL || "gpt-5.5";
 
   const openaiResponse = await fetch("https://api.openai.com/v1/responses", {
@@ -419,14 +424,18 @@ async function analyzeWithOpenAI(
 
 async function analyzeWithGemini(
   image: File,
-  { preferences, servings }: { preferences: string; servings: string },
+  {
+    groceryLocation,
+    preferences,
+    servings,
+  }: { groceryLocation: string; preferences: string; servings: string },
 ) {
   if (!process.env.GEMINI_API_KEY) {
     return Response.json(exampleResult);
   }
 
   const model = process.env.GEMINI_MODEL || "gemini-2.5-flash";
-  const prompt = buildPrompt({ preferences, servings });
+  const prompt = buildPrompt({ groceryLocation, preferences, servings });
   const base64 = await fileToBase64(image);
   const geminiResponse = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${process.env.GEMINI_API_KEY}`,
@@ -494,7 +503,15 @@ async function fileToBase64(file: File) {
   return buffer.toString("base64");
 }
 
-function buildPrompt({ preferences, servings }: { preferences: string; servings: string }) {
+function buildPrompt({
+  groceryLocation,
+  preferences,
+  servings,
+}: {
+  groceryLocation: string;
+  preferences: string;
+  servings: string;
+}) {
   return `Analyze this food image for SnapChef.
 
 Return only valid JSON. Do not wrap it in markdown.
@@ -550,13 +567,15 @@ JSON shape:
 
 Use ${servings || "2"} servings.
 Preferences: ${preferences || "none"}.
+Grocery area: ${groceryLocation || "not provided"}.
 Preferences should guide the recipe plan, substitutions, shopping estimates, nutrition angle, cooking method, and search links. They should not override what is visible in the photo. For example, if the user asks for vegetarian but meat is visible, identify the image honestly and suggest vegetarian swaps.
-For shoppingPlan, include rough US grocery price ranges, not exact or live prices. Include where to find each item using store sections or common budget-friendly options such as produce, frozen foods, canned goods, pantry aisle, dairy, Walmart, Aldi, Kroger, or a campus pantry when helpful.
+For shoppingPlan, include rough grocery price ranges, not exact or live prices. If a grocery area is provided, tailor the ranges, store examples, and whereToFind notes to that region when possible. If the area is outside the US or unclear, avoid assuming Walmart/Aldi/Kroger are available and use general local market, supermarket, campus pantry, produce market, or discount grocer language instead.
+If a grocery area is provided, priceNote must mention that estimates are area-aware rough estimates and that exact shelf prices, sales, brands, taxes, and availability still vary.
 For nutritionEstimate, return rough estimated per-serving values only. Do not imply medical precision.
 For recipeVariants, include 3-5 useful alternate ways to make the same likely dish, such as high-protein, cheaper, spicy, vegetarian, dorm-friendly, microwave, air-fryer, creamy, or faster versions when relevant.
 If the exact dish is uncertain, make the best likely guess and set confidence to low or medium.
 Search links must be YouTube search URLs, not individual video URLs.
-Do not claim exact calories or real-time grocery prices. Include clear allergy uncertainty when useful: hidden ingredients may not be visible and labels should be checked.`;
+Do not claim exact calories, real-time grocery prices, exact store availability, or current sales. Include clear allergy uncertainty when useful: hidden ingredients may not be visible and labels should be checked.`;
 }
 
 function extractOutputText(payload: unknown) {

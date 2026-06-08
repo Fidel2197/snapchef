@@ -410,6 +410,7 @@ export default function SnapChefApp() {
   const [previewUrl, setPreviewUrl] = useState("");
   const [selectedPresets, setSelectedPresets] = useState<string[]>([]);
   const [customPreferences, setCustomPreferences] = useState("");
+  const [groceryLocation, setGroceryLocation] = useState("");
   const [servings, setServings] = useState("2");
   const [result, setResult] = useState<SnapChefResult | null>(null);
   const [activeTab, setActiveTab] = useState<ResultTab>("recipe");
@@ -433,6 +434,8 @@ export default function SnapChefApp() {
   const [dishNameDraft, setDishNameDraft] = useState("");
   const [actionStatus, setActionStatus] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const resultPanelRef = useRef<HTMLElement>(null);
+  const isGroceryLocationReadyRef = useRef(false);
   const user = session?.user ?? null;
   const displayName = user?.email?.split("@")[0] || "My recipes";
 
@@ -459,6 +462,31 @@ export default function SnapChefApp() {
 
   const resultPhoto = previewUrl || "/snapchef-food-board.png";
   const isScanActive = isAnalyzing || Boolean(result);
+
+  useEffect(() => {
+    window.setTimeout(() => {
+      const savedLocation = window.localStorage.getItem("snapchef:grocery-location");
+      isGroceryLocationReadyRef.current = true;
+
+      if (savedLocation) {
+        setGroceryLocation(savedLocation);
+      }
+    }, 0);
+  }, []);
+
+  useEffect(() => {
+    if (!isGroceryLocationReadyRef.current) {
+      return;
+    }
+
+    const nextLocation = groceryLocation.trim();
+
+    if (nextLocation) {
+      window.localStorage.setItem("snapchef:grocery-location", nextLocation);
+    } else {
+      window.localStorage.removeItem("snapchef:grocery-location");
+    }
+  }, [groceryLocation]);
 
   function getSavedScanImageUrl(scan: SavedScan) {
     if (!scan.image_path || scan.image_path === "local-preview") {
@@ -588,6 +616,7 @@ export default function SnapChefApp() {
     formData.append("image", file);
     formData.append("preferences", preferences);
     formData.append("servings", servings);
+    formData.append("groceryLocation", groceryLocation.trim());
 
     try {
       const response = await fetch("/api/analyze", {
@@ -766,6 +795,7 @@ export default function SnapChefApp() {
           : "Saved to your scan history.",
       );
       setMainView("history");
+      window.setTimeout(scrollToResults, 80);
     }
 
     setIsSavingScan(false);
@@ -910,6 +940,19 @@ export default function SnapChefApp() {
     setActionStatus("Recipe copied for sharing.");
   }
 
+  function scrollToResults() {
+    resultPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function toggleHistoryView() {
+    const nextView = mainView === "history" ? "scan" : "history";
+    setMainView(nextView);
+
+    if (nextView === "history") {
+      window.setTimeout(scrollToResults, 80);
+    }
+  }
+
   return (
     <main className={`${styles.shell} ${isScanActive ? styles.activeShell : ""}`}>
       <section className={styles.workspace}>
@@ -922,7 +965,7 @@ export default function SnapChefApp() {
             <span className={styles.statusBadge}>{confidenceText}</span>
             <button
               className={mainView === "history" ? styles.activeNavButton : styles.navButton}
-              onClick={() => setMainView((view) => (view === "history" ? "scan" : "history"))}
+              onClick={toggleHistoryView}
               type="button"
             >
               My Scans
@@ -960,6 +1003,13 @@ export default function SnapChefApp() {
               userEmail={user?.email ?? ""}
             />
           </div>
+        ) : null}
+
+        {mainView === "history" ? (
+          <button className={styles.scrollHint} onClick={scrollToResults} type="button">
+            <span>My Scans is below</span>
+            <strong>Scroll down to see saved scans</strong>
+          </button>
         ) : null}
 
         {isAnalyzing ? (
@@ -1062,6 +1112,18 @@ export default function SnapChefApp() {
               />
             </label>
             <label className={styles.field}>
+              <span>Grocery area</span>
+              <input
+                autoComplete="postal-code"
+                inputMode="text"
+                maxLength={80}
+                value={groceryLocation}
+                onChange={(event) => setGroceryLocation(event.target.value)}
+                placeholder="ZIP, city, campus, or country"
+              />
+              <small>Used for rough regional prices and store suggestions.</small>
+            </label>
+            <label className={styles.field}>
               <span>Extra notes</span>
               <input
                 value={customPreferences}
@@ -1132,7 +1194,7 @@ export default function SnapChefApp() {
         ) : null}
       </section>
 
-      <section className={styles.resultPanel} aria-live="polite">
+      <section className={styles.resultPanel} aria-live="polite" ref={resultPanelRef}>
         <div className={styles.resultCanvas}>
           {mainView === "history" ? (
             <HistoryView

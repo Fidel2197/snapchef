@@ -1031,7 +1031,7 @@ export default function SnapChefApp() {
         {!isScanActive ? (
           <div className={styles.heroGrid}>
             <div className={styles.brandBar}>
-              <p className={styles.eyebrow}>Food photo to recipe</p>
+              <p className={styles.eyebrow}>The Food photo to recipe app</p>
               <h1>Turn a food photo into dinner plans.</h1>
               <p className={styles.subtitle}>
                 Upload a plate, get a likely dish, ingredient list, recipe steps, swaps, and
@@ -1121,10 +1121,10 @@ export default function SnapChefApp() {
                 onChange={(event) => setGroceryLocation(event.target.value)}
                 placeholder="ZIP, city, campus, or country"
               />
-              <small>Used for rough regional prices and store suggestions.</small>
+              <small>This is used for rough regional prices and store suggestions.</small>
             </label>
             <label className={styles.field}>
-              <span>Extra notes</span>
+              <span>Any extra notes</span>
               <input
                 value={customPreferences}
                 onChange={(event) => setCustomPreferences(event.target.value)}
@@ -1363,7 +1363,8 @@ export default function SnapChefApp() {
                     <h3>Useful plans from food photos.</h3>
                     <p>
                       Built for students, leftovers, screenshots, busy nights, and quick meal
-                      decisions.
+                      decisions. Feel free to use the app to its full potential, but it’s designed to be helpful
+                      even if you just want a rough recipe or a video search for a mystery meal.
                     </p>
                   </div>
                 </section>
@@ -1386,7 +1387,7 @@ export default function SnapChefApp() {
                 <section className={styles.foodIdeaPanel}>
                   <div>
                     <p className={styles.eyebrow}>Food ideas</p>
-                    <h3>Good first scans.</h3>
+                    <h3>Some good first scans.</h3>
                   </div>
                   <div className={styles.tagCloud} aria-label="Food ideas">
                     {foodIdeaTags.map((tag) => (
@@ -1397,8 +1398,8 @@ export default function SnapChefApp() {
 
                 <section className={styles.contactPanel}>
                   <div>
-                    <p className={styles.eyebrow}>Contact</p>
-                    <h3>Feedback makes it better.</h3>
+                    <p className={styles.eyebrow}>Contact Me</p>
+                    <h3>Your feedback would help make the app better.</h3>
                   </div>
                   <div className={styles.contactLinks}>
                     <a href="mailto:fanyanwu@mcneese.edu">Email feedback</a>
@@ -1427,8 +1428,8 @@ export default function SnapChefApp() {
 
                 <section className={styles.photoFinishPanel}>
                   <div>
-                    <p className={styles.eyebrow}>Next plate</p>
-                    <h3>Dorm bowls, leftovers, and quick dinners.</h3>
+                    <p className={styles.eyebrow}>Next plate Ideas</p>
+                    <h3>Dorm bowls, leftovers, quick dinners etc.</h3>
                   </div>
                 </section>
               </div>

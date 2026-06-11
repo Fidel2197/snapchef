@@ -1112,7 +1112,7 @@ export default function SnapChefApp() {
               />
             </label>
             <label className={styles.field}>
-              <span>Grocery area</span>
+              <span>Find the prices based on where you live</span>
               <input
                 autoComplete="postal-code"
                 inputMode="text"

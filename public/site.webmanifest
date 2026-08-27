@@ -1,0 +1,16 @@
+{
+  "name": "SnapChef",
+  "short_name": "SnapChef",
+  "description": "Food photo to recipe assistant.",
+  "icons": [
+    {
+      "src": "/snapchef-symbol.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any maskable"
+    }
+  ],
+  "theme_color": "#10241d",
+  "background_color": "#10241d",
+  "display": "standalone"
+}

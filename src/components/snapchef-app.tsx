@@ -958,7 +958,7 @@ export default function SnapChefApp() {
       <section className={styles.workspace}>
         <header className={styles.appHeader}>
           <div className={styles.logoLockup}>
-            <span className={styles.logoMark}>SC</span>
+            <span className={styles.logoMark} aria-hidden="true" />
             <span>SnapChef</span>
           </div>
           <div className={styles.headerActions}>

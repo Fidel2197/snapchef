@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+  <title id="title">SnapChef symbol</title>
+  <desc id="desc">A cloche, camera focus ring, and sparkle for food photo recipe analysis.</desc>
+  <defs>
+    <linearGradient id="snapChefBg" x1="16" y1="112" x2="114" y2="12" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0f3324"/>
+      <stop offset=".55" stop-color="#19653f"/>
+      <stop offset="1" stop-color="#f8c35b"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="28" fill="url(#snapChefBg)"/>
+  <path d="M28 77c3-23 18-38 36-38s33 15 36 38" fill="#f8fff7" stroke="#10241d" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M23 83h82" stroke="#10241d" stroke-width="7" stroke-linecap="round"/>
+  <path d="M44 91h40" stroke="#f8fff7" stroke-width="7" stroke-linecap="round"/>
+  <circle cx="64" cy="34" r="8" fill="#f8c35b" stroke="#10241d" stroke-width="4"/>
+  <path d="M35 31h15M43 23v16M92 33l7-7M99 33l-7-7" stroke="#f8fff7" stroke-width="5" stroke-linecap="round"/>
+  <path d="M41 56h46" stroke="#19653f" stroke-width="5" stroke-linecap="round" opacity=".75"/>
+</svg>

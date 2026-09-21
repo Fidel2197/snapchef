@@ -22,7 +22,7 @@ export function ResultsPanel({ result, previewUrl, resultPhoto, dishNameDraft,
               <div
                 className={styles.resultPhoto}
                 role="img"
-                aria-label={previewUrl ? "Uploaded food preview" : "Food spread"}
+                aria-label={result.exampleMode ? "Example result: food illustration" : previewUrl ? "Uploaded food preview" : "Food spread"}
                 style={{ backgroundImage: `url(${resultPhoto})` }}
               >
                 <span>{result.exampleMode ? "Example result" : "Your scan"}</span>
@@ -44,6 +44,7 @@ export function ResultsPanel({ result, previewUrl, resultPhoto, dishNameDraft,
 
               <ResultActionBar
                 actionStatus={actionStatus}
+                isExample={Boolean(result.exampleMode)}
                 isSavingScan={isSavingScan}
                 onCopyGroceryList={copyShoppingList}
                 onCopyRecipe={copyRecipe}

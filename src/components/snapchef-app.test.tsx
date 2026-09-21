@@ -50,6 +50,8 @@ describe("the scan flow", () => {
     render(<SnapChefApp />);
     fireEvent.click(screen.getByRole("button", { name: "See example" }));
     expect(screen.getByText("Example result")).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "Example result: food illustration" })).toBeInTheDocument();
+    expect(screen.getByText(/No photo was analyzed and no AI request was made/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Save Recipe" })).toBeDisabled();
   });
 

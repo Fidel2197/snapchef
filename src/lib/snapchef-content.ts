@@ -294,4 +294,5 @@ export const exampleResult: SnapChefResult = {
     },
   ],
   exampleMode: true,
+  notice: "This is a fixed example recipe. No photo was analyzed and no AI request was made.",
 };

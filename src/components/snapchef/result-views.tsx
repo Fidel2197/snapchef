@@ -57,6 +57,7 @@ export function EditableDishHeader({
 
 export function ResultActionBar({
   actionStatus,
+  isExample,
   isSavingScan,
   onCopyGroceryList,
   onCopyRecipe,
@@ -69,6 +70,7 @@ export function ResultActionBar({
   userEmail,
 }: {
   actionStatus: string;
+  isExample: boolean;
   isSavingScan: boolean;
   onCopyGroceryList: () => void;
   onCopyRecipe: () => void;
@@ -85,12 +87,12 @@ export function ResultActionBar({
       <div className={styles.resultActionSummary}>
         <span>Recipe actions</span>
         <strong>
-          {selectedSavedScanId ? "Saved recipe" : userEmail ? "Ready to save" : "Sign in to save"}
+          {isExample ? "Analyze your own photo to save a recipe" : selectedSavedScanId ? "Saved recipe" : userEmail ? "Ready to save" : "Sign in to save"}
         </strong>
         {saveStatus || actionStatus ? <small>{saveStatus || actionStatus}</small> : null}
       </div>
       <div className={styles.resultActions}>
-        <button disabled={isSavingScan || !userEmail} onClick={onSave} type="button">
+        <button disabled={isExample || isSavingScan || !userEmail} onClick={onSave} type="button">
           {isSavingScan ? "Saving..." : "Save Recipe"}
         </button>
         <button onClick={onScanAnother} type="button">

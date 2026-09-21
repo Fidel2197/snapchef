@@ -1,3 +1,5 @@
+import { imageValidationError } from "@/lib/analyze-image";
+
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
@@ -321,7 +323,9 @@ const snapChefSchema = {
 };
 
 export async function POST(request: Request) {
-  const formData = await request.formData();
+  let formData: FormData;
+  try { formData = await request.formData(); }
+  catch { return Response.json({ error: "Send an image using a multipart form." }, { status: 400 }); }
   const image = formData.get("image");
   const preferences = String(formData.get("preferences") || "").trim();
   const servings = String(formData.get("servings") || "2").trim();
@@ -331,35 +335,31 @@ export async function POST(request: Request) {
     return Response.json({ error: "Image file is required." }, { status: 400 });
   }
 
-  if (!image.type.startsWith("image/")) {
-    return Response.json({ error: "Please upload an image file." }, { status: 400 });
-  }
-
-  if (image.size > 8 * 1024 * 1024) {
-    return Response.json({ error: "Please upload an image under 8 MB." }, { status: 400 });
-  }
+  const validation = imageValidationError(image);
+  if (validation) return Response.json({ error: validation }, { status: 400 });
 
   const provider = (process.env.AI_PROVIDER || "gemini").toLowerCase();
 
-  if (provider === "gemini" && process.env.GEMINI_API_KEY) {
-    return analyzeWithGemini(image, { groceryLocation, preferences, servings });
-  }
-
-  if (provider === "openai" && process.env.OPENAI_API_KEY) {
-    return analyzeWithOpenAI(image, { groceryLocation, preferences, servings });
-  }
-
-  if (process.env.GEMINI_API_KEY) {
-    return analyzeWithGemini(image, { groceryLocation, preferences, servings });
-  }
-
-  if (process.env.OPENAI_API_KEY) {
-    return analyzeWithOpenAI(image, { groceryLocation, preferences, servings });
+  try {
+    if (provider === "gemini" && process.env.GEMINI_API_KEY) {
+      return await analyzeWithGemini(image, { groceryLocation, preferences, servings });
+    }
+    if (provider === "openai" && process.env.OPENAI_API_KEY) {
+      return await analyzeWithOpenAI(image, { groceryLocation, preferences, servings });
+    }
+    if (process.env.GEMINI_API_KEY) {
+      return await analyzeWithGemini(image, { groceryLocation, preferences, servings });
+    }
+    if (process.env.OPENAI_API_KEY) {
+      return await analyzeWithOpenAI(image, { groceryLocation, preferences, servings });
+    }
+  } catch {
+    return Response.json({ error: "The image analysis service could not be reached. Please try again." }, { status: 502 });
   }
 
   return Response.json({
     ...exampleResult,
-    notice: "Connect Gemini to enable live image analysis.",
+    notice: "Image analysis is unavailable. This is a fixed example recipe; your uploaded photo was not analyzed.",
   });
 }
 
@@ -381,6 +381,7 @@ async function analyzeWithOpenAI(
 
   const openaiResponse = await fetch("https://api.openai.com/v1/responses", {
     method: "POST",
+    signal: AbortSignal.timeout(45_000),
     headers: {
       Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
       "Content-Type": "application/json",
@@ -441,6 +442,7 @@ async function analyzeWithGemini(
     `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${process.env.GEMINI_API_KEY}`,
     {
       method: "POST",
+      signal: AbortSignal.timeout(45_000),
       headers: {
         "Content-Type": "application/json",
       },

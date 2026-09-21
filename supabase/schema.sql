@@ -1,5 +1,7 @@
--- Optional next phase schema for SnapChef saved scans.
--- Run this in Supabase SQL Editor when you are ready to add user accounts/history.
+-- Account-scoped saved recipe rows and owner-managed image uploads.
+-- Run in Supabase SQL Editor to enable accounts/history.
+-- Images are PUBLIC by URL; row-level security below protects recipe rows,
+-- not confidentiality of the stored image files. See README storage privacy.
 
 create table if not exists public.snapchef_scans (
   id uuid primary key default gen_random_uuid(),

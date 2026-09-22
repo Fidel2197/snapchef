@@ -1,12 +1,39 @@
 # SnapChef
 
-**[Open SnapChef](https://snapchef-nine.vercel.app/)** · [Portfolio](https://fidel-portfolio-eta.vercel.app/#snapchef)
-
 Turn a food photo into a likely dish, ingredient list, recipe steps, substitutions, rough shopping costs, nutrition estimates, and cooking-video searches. Optional accounts let you save and reopen recipes.
 
 ![SnapChef food-photo upload and recipe workspace](public/docs/snapchef-home.png)
 
-## Try it
+## Links
+
+- [Open SnapChef](https://snapchef-nine.vercel.app/)
+- [Repository](https://github.com/Fidel2197/snapchef)
+- [Project page](https://fidel-portfolio-eta.vercel.app/snapchef.html)
+
+## Overview
+
+SnapChef connects food-photo analysis with practical recipe planning. Upload an image, choose your preferences, and explore a recipe with ingredients, cooking steps, substitutions, and shopping information. Supabase accounts let you save a result and return to it later.
+
+## Features
+
+- Food-photo uploads with format and size validation
+- Servings, dietary notes, equipment, and grocery-region preferences
+- Recipe steps, substitutions, nutrition estimates, and shopping lists
+- Recipe copying, downloading, sharing, and video-search links
+- Email/password accounts and saved scan history
+- Server-side Gemini or OpenAI integration with visible loading and error states
+- Responsive upload, results, account, and history views
+
+## Technologies Used
+
+- Next.js App Router, React, and TypeScript
+- CSS Modules for styling
+- Supabase Auth, PostgreSQL, and Storage
+- Gemini or OpenAI for image analysis
+- Vitest and React Testing Library for automated tests
+- Vercel for hosting
+
+## Using SnapChef
 
 1. Upload a JPG, PNG, or WebP image up to 3 MB.
 2. Choose servings and preferences; optionally add equipment, dietary notes, and a grocery region.
@@ -15,7 +42,7 @@ Turn a food photo into a likely dish, ingredient list, recipe steps, substitutio
 
 **See example** loads a fixed pasta recipe and makes no AI request. It is labeled **Example result** and cannot be saved as an analyzed scan. If no AI key is configured on an installation, the API returns a separate fixed recipe with a notice that the uploaded photo was not analyzed. Provider outages and quota failures show an error instead of silently substituting an example.
 
-## Local setup
+## Getting Started
 
 Use Node.js **22.12 or newer** and npm. CI uses Node 22.
 
@@ -57,7 +84,7 @@ The selected provider is preferred when its key is present. If that key is absen
 
 **Storage privacy:** recipe rows are scoped to their owner by RLS. The supplied image bucket is **public**: anyone with a saved photo's URL can view it, even though upload/delete permissions are scoped to the owner. Do not upload private or sensitive photos. Making it private requires coordinated policy and signed-URL code changes; this repository does not claim private image storage.
 
-## How the app is organized
+## Project Structure
 
 | Area | Responsibility |
 | --- | --- |
@@ -71,8 +98,6 @@ The selected provider is preferred when its key is present. If that key is absen
 | `src/lib/recipe-result.ts` | Backward-compatible result defaults, search links, and export formatting |
 | `src/app/api/analyze/route.ts` | Server-side provider calls, result normalization, and fallback labeling |
 
-The stack is Next.js App Router, React, TypeScript, CSS Modules, Supabase Auth/PostgreSQL/Storage, and Gemini or OpenAI. CSS and the established page design are preserved while responsibilities live in smaller components and services.
-
 ### Where data goes
 
 - The selected file gets a temporary browser preview. Analysis sends the image, servings, notes, and grocery region to `/api/analyze`, which forwards them to the configured AI provider.
@@ -80,7 +105,7 @@ The stack is Next.js App Router, React, TypeScript, CSS Modules, Supabase Auth/P
 - If a recipe insert fails after an image upload, the app attempts to remove that uploaded image. Deleting a saved scan removes its recipe row and then its stored photo; these two operations are not an atomic transaction.
 - The grocery region is stored in browser `localStorage`. Supabase manages the browser's authentication session. Unsaved results and shopping checkboxes are temporary page state.
 
-## Checks
+## Tests and Production Build
 
 ```sh
 npm run lint
@@ -109,6 +134,6 @@ The API uses the Node.js runtime and allows up to 60 seconds; each upstream AI c
 - The public analysis route has no application-level per-user rate limit. Use provider quotas and deployment controls before exposing an installation to substantial traffic.
 - Automated checks mock external services. Real provider availability, email delivery, RLS enforcement, and deployed account flows still need environment-specific validation.
 
-## Development notes
+## Author
 
-This project was developed with AI-assisted implementation. The repository exposes the design choices, limitations, source changes, and repeatable checks so the work can be reviewed. The latest maintenance pass split the large component, added regression tests, corrected the hosting upload limit, and made failure states explicit.
+Built by Fidel Anyanwu.

@@ -1,5 +1,7 @@
 # SnapChef
 
+[![SnapChef CI](https://github.com/Fidel2197/snapchef/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Fidel2197/snapchef/actions/workflows/ci.yml)
+
 Turn a food photo into a likely dish, ingredient list, recipe steps, substitutions, rough shopping costs, nutrition estimates, and cooking-video searches. Optional accounts let you save and reopen recipes.
 
 ![SnapChef food-photo upload and recipe workspace](public/docs/snapchef-home.png)
